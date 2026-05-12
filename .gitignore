@@ -1,0 +1,65 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+**/*-key.json
+**/credentials*.json
+**/service-account*.json
+keys/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Dagster
+.tmp_dagster_home*/
+dagster_home/
+.dagster/
+
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+*.tfvars
+!*.tfvars.example
+!terraform.tfvars.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/

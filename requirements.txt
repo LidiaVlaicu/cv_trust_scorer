@@ -1,0 +1,15 @@
+pymupdf
+spacy
+transformers
+torch
+fastapi
+uvicorn
+streamlit
+dagster
+dagster-webserver
+dbt-bigquery
+requests
+python-magic
+pydantic-ai
+google-cloud-storage
+google-cloud-bigquery
