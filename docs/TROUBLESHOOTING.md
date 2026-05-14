@@ -95,51 +95,40 @@ echo "Service account: $SA_EMAIL"  # confirm this is correct before using
 
 ---
 
-### `which python` shows pyenv path instead of venv
+## Pipeline
 
-**Symptom**: even after `source venv/bin/activate`, `which python` returns a path like `~/.pyenv/shims/python`.
+### Pipeline reprocesses all CVs after adding `content_hash` column
 
-**Cause**: the venv was not activated, or activation did not modify the PATH correctly.
+### Symptom
+After materializing `extract_raw_text`, the logs show `[REPROCESS changed]`
+for every CV in BigQuery, even though no PDFs were modified in GCS.
 
-**Fix**:
+### Cause
+The `content_hash` column was added to the bronze tables after the initial
+batch of CVs was already ingested. Existing rows had `NULL` in the new
+column. The idempotency check compares stored hash vs. current hash:
 
-```bash
-cd /path/to/cv-trust_scorer
-source venv/bin/activate
-which python
+```python
+if existing[submission_id] == current_hash:
+    skip
+else:
+    reprocess
 ```
 
-Should now show `/path/to/cv-trust_scorer/venv/bin/python`.
+`None != "<any hash>"` is always True, so every existing row looks "changed"
+and gets reprocessed on the first run after the column was added.
 
-If the venv directory does not exist, create it:
+### Resolution
+This is a one-time event. The reprocessing run populates `content_hash`
+for all existing rows. Subsequent runs skip unchanged CVs correctly
+(`[SKIP unchanged]`).
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+### How to avoid next time
+When adding a column that participates in change-detection or idempotency
+logic, either:
+1. Backfill the column for existing rows before the next pipeline run, or
+2. Accept that the next run will reprocess everything (and budget for the
+   API cost — in our case ~300 Claude calls).
 
----
-
-### ImportError: cannot import name 'bigquery' from 'google.cloud'
-
-**Cause**: the `google-cloud-bigquery` package is not installed in the active Python environment.
-
-**Fix**:
-
-```bash
-source venv/bin/activate
-pip install google-cloud-bigquery
-```
-
-Also confirm `requirements.txt` lists the package:
-
-```bash
-grep google-cloud-bigquery requirements.txt
-```
-
-If missing, add it:
-
-```bash
-pip freeze > requirements.txt
-```
+A backfill script for option 1 would: list all PDFs in GCS, compute hashes,
+and `UPDATE ... SET content_hash = ? WHERE submission_id = ?` for each.

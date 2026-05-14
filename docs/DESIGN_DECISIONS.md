@@ -34,7 +34,7 @@ Local development uses Application Default Credentials with service account impe
 - The human admin account is granted `roles/iam.serviceAccountTokenCreator` on the service account, allowing it to obtain impersonation tokens.
 - ADC is configured via `gcloud auth application-default login --impersonate-service-account`, which writes an ADC file containing the impersonation URL but no long-lived key material.
 - Google client libraries automatically detect the ADC file and obtain short-lived (1-hour) impersonation tokens for each session.
-- A diagnostic script (`scripts/verify_auth.py`) confirms the effective principal is the service account, not the human account.
+- A diagnostic script (`scripts/test_auth.py`) confirms the effective principal is the service account, not the human account.
 
 ### Production migration path
 

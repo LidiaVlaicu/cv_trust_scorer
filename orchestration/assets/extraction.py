@@ -2,17 +2,26 @@ import re
 import json
 import fitz
 import anthropic
+import hashlib
 from dagster import asset, get_dagster_logger
 from google.cloud import storage, bigquery
 from datetime import datetime, timezone
 import os
 from dotenv import load_dotenv
 
+from orchestration.assets.schemas import ExtractedCV
+
 load_dotenv()
 
-BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
-PROJECT_ID = os.getenv("BIGQUERY_PROJECT_ID")
-BRONZE_DATASET = "cv_trust_scorer_bronze"
+def _require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required env var: {name}")
+    return value
+
+BUCKET_NAME = _require_env("GCS_BUCKET_NAME")
+PROJECT_ID = _require_env("GCP_PROJECT_ID")
+BRONZE_DATASET = _require_env("BQ_DATASET_BRONZE")
 
 TECHNICAL_KEYWORDS = [
     "python", "sql", "spark", "docker", "kubernetes", "data engineer",
@@ -173,7 +182,7 @@ CV TEXT:
     if response_text.startswith("```"):
         response_text = re.sub(r"```json\n?|```\n?", "", response_text).strip()
 
-    cv_data = json.loads(response_text)
+    cv_data = ExtractedCV.model_validate_json(response_text)
     return cv_data
 
 
@@ -214,27 +223,36 @@ def insert_rows_to_bigquery(table_id, rows):
     if errors:
         raise Exception(f"BigQuery insert errors: {errors}")
 
+def compute_file_hash(file_bytes: bytes) -> str:
+    return hashlib.sha256(file_bytes).hexdigest()
 
-def get_processed_ids(table, id_column="submission_id"):
+def delete_cv_data(submission_id: str):
+    """Removes all bronze records for a given submission_id."""
+    client = bigquery.Client(project=PROJECT_ID)
+    
+    tables = ["raw_candidates", "raw_work_experience", "raw_skills"]
+    for table in tables:
+        query = f"""
+            DELETE FROM `{PROJECT_ID}.{BRONZE_DATASET}.{table}`
+            WHERE submission_id = '{submission_id}'
+        """
+        client.query(query).result()
+
+def get_processed_versions(table, id_col="submission_id", hash_col="content_hash"):
     """
-    Returns a set of IDs already present in a BigQuery table.
-    Used to skip CVs that have already been processed.
-    If the table does not exist or query fails, returns empty set
-    so the pipeline starts fresh without crashing.
+    Returns {submission_id: content_hash} of already-processed CVs.
+    Returns empty dict if table doesn't exist or query fails.
     """
     client = bigquery.Client(project=PROJECT_ID)
-    query = f"SELECT {id_column} FROM `{PROJECT_ID}.{BRONZE_DATASET}.{table}`"
-
+    query = f"""
+        SELECT {id_col}, {hash_col}
+        FROM `{PROJECT_ID}.{BRONZE_DATASET}.{table}`
+    """
     try:
         rows = client.query(query).result()
-        existing_ids = set()
-        for row in rows:
-            existing_ids.add(row[id_column])
-        return existing_ids
-
+        return {row[id_col]: row[hash_col] for row in rows}
     except Exception:
-        return set()
-
+        return {}
 
 # ── ASSET 1: extract_raw_text ─────────────────────────────────────────────
 @asset
@@ -248,59 +266,50 @@ def extract_raw_text():
     """
     log = get_dagster_logger()
     results = []
-
-    # get IDs already in BigQuery to avoid duplicates
-    existing = get_processed_ids("raw_candidates")
+    
+    # Now returns dict: {submission_id: content_hash}
+    existing = get_processed_versions("raw_candidates")
     log.info(f"Already processed: {len(existing)} CVs")
-
+    
     for folder in ["inconsistent", "legitimate"]:
         blobs = list_pdfs_in_gcs(folder)
-        log.info(f"Found {len(blobs)} PDFs in {folder}/")
-
+        
         for blob in blobs:
             filename = blob.name.split("/")[-1]
             submission_id = filename.replace(".pdf", "")
-
-            # skip if already in BigQuery
-            if submission_id in existing:
-                log.info(f"[SKIP] {submission_id}")
-                continue
-
+            
             try:
-                # download PDF from GCS
                 pdf_bytes = download_pdf_from_gcs(blob)
-
-                # extract text with PyMuPDF
+                current_hash = compute_file_hash(pdf_bytes)
+                
+                # Three cases
+                if submission_id in existing:
+                    if existing[submission_id] == current_hash:
+                        # Unchanged: skip
+                        log.info(f"[SKIP unchanged] {submission_id}")
+                        continue
+                    else:
+                        # Changed: delete old, then reprocess
+                        log.info(f"[REPROCESS changed] {submission_id}")
+                        delete_cv_data(submission_id)
+                
+                # Process (new or changed)
                 doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                 raw_text = ""
                 for page in doc:
-                    raw_text = raw_text + page.get_text()
+                    raw_text += page.get_text()
                 doc.close()
-
-                # skip empty PDFs
+                
                 if not raw_text.strip():
                     log.warning(f"Empty text: {filename}")
                     continue
-
-                # classify and detect seniority
+                
                 profile_type = classify_profile(raw_text)
                 seniority = detect_seniority(raw_text)
-
-                # save raw text to GCS as backup
-                save_json_to_gcs(
-                    {
-                        "submission_id": submission_id,
-                        "raw_text": raw_text,
-                        "profile_type": profile_type,
-                        "seniority_detected": seniority,
-                        "extracted_at": datetime.now(timezone.utc).isoformat(),
-                    },
-                    f"cvs/extracted/raw_text/{submission_id}.json"
-                )
-
-                # prepare row for BigQuery
+                
                 row = {
                     "submission_id": submission_id,
+                    "content_hash": current_hash,  # new field
                     "profile_type": profile_type,
                     "seniority_detected": seniority,
                     "cv_file_path": f"gs://{BUCKET_NAME}/{blob.name}",
@@ -309,21 +318,17 @@ def extract_raw_text():
                     "folder": folder,
                 }
                 results.append(row)
-
                 log.info(f"[OK] {submission_id}")
-
+                
             except Exception as e:
                 log.error(f"[FAIL] {filename}: {e}")
-
-    # insert all new rows into BigQuery at once
-    if len(results) > 0:
+    
+    if results:
         table_id = f"{PROJECT_ID}.{BRONZE_DATASET}.raw_candidates"
         insert_rows_to_bigquery(table_id, results)
-        log.info(f"Inserted {len(results)} rows into raw_candidates")
-
+        log.info(f"Inserted {len(results)} rows")
+    
     return results
-
-
 # ── ASSET 2: extract_entities (AI Agent) ─────────────────────────────────
 @asset
 def extract_entities(extract_raw_text):
@@ -339,8 +344,7 @@ def extract_entities(extract_raw_text):
     work_experience_rows = []
     skills_rows = []
 
-    # get IDs already processed to avoid duplicates
-    existing_exp = get_processed_ids("raw_work_experience")
+    existing_exp = get_processed_versions("raw_work_experience")
     log.info(f"Already processed experiences: {len(existing_exp)}")
 
     for record in extract_raw_text:
