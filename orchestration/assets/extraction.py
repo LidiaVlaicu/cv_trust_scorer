@@ -8,7 +8,7 @@ from google.cloud import storage, bigquery
 from datetime import datetime, timezone
 import os
 from dotenv import load_dotenv
-
+from pydantic import ValidationError
 from orchestration.assets.schemas import ExtractedCV
 
 load_dotenv()
@@ -24,12 +24,72 @@ PROJECT_ID = _require_env("GCP_PROJECT_ID")
 BRONZE_DATASET = _require_env("BQ_DATASET_BRONZE")
 
 TECHNICAL_KEYWORDS = [
-    "python", "sql", "spark", "docker", "kubernetes", "data engineer",
-    "software engineer", "machine learning", "backend", "frontend",
-    "devops", "cloud", "api", "tensorflow", "pytorch", "bigquery",
-    "airflow", "dbt", "kafka", "terraform", "react", "typescript",
-    "data scientist", "ml engineer", "data analyst", "research engineer",
-    "full stack", "microservices", "ci/cd", "github actions", "mlops",
+    # Roles
+    "software engineer", "data engineer", "data scientist", "data analyst",
+    "ml engineer", "machine learning engineer", "ai engineer",
+    "analytics engineer", "bi analyst", "business intelligence",
+    "backend engineer", "frontend engineer", "full stack", "fullstack",
+    "devops engineer", "sre", "platform engineer", "cloud engineer",
+    "solutions architect", "tech lead", "staff engineer", "principal engineer",
+
+    # Languages
+    "python", "sql", "java", "scala", "go", "golang", "rust",
+    "typescript", "javascript", "c++", "c#", "bash",
+
+    # Cloud platforms
+    "aws", "gcp", "google cloud", "azure",
+
+    # Cloud services (the ones that actually appear on CVs)
+    "s3", "ec2", "lambda", "redshift", "sagemaker",
+    "bigquery", "cloud run", "dataflow", "vertex ai", "gcs",
+    "azure data factory", "azure synapse", "azure databricks", "azure devops",
+    "power bi", "dax", "power query", "azure data studio",
+
+    # Data engineering
+    "spark", "pyspark", "kafka", "airflow", "dagster", "prefect",
+    "dbt", "snowflake", "databricks", "fivetran", "airbyte",
+    "etl", "elt", "data warehouse", "data lake", "lakehouse",
+    "delta lake", "iceberg", "medallion architecture",
+
+    # Databases
+    "postgres", "postgresql", "mysql", "mongodb", "redis",
+    "elasticsearch", "cassandra",
+
+    # BI & analytics
+    "tableau", "looker", "looker studio", "qlik", "metabase",
+    "superset", "excel",
+
+    # ML & AI
+    "machine learning", "deep learning", "tensorflow", "pytorch",
+    "scikit-learn", "xgboost", "huggingface", "transformers",
+    "pandas", "numpy", "mlflow", "mlops",
+    "llm", "nlp", "computer vision", "embeddings", "vector database",
+    "rag", "langchain", "openai", "anthropic", "claude",
+    "prompt engineering", "fine-tuning", "agentic",
+
+    # DevOps & infra
+    "docker", "kubernetes", "k8s", "terraform", "helm", "ansible",
+    "prometheus", "grafana", "datadog",
+
+    # CI/CD & version control
+    "git", "github", "gitlab", "github actions", "gitlab ci",
+    "jenkins", "argocd", "ci/cd",
+
+    # Web — backend
+    "backend", "api", "rest", "graphql", "grpc", "microservices",
+    "serverless", "fastapi", "django", "flask", "spring boot",
+    "express", "nestjs",
+
+    # Web — frontend
+    "frontend", "react", "next.js", "vue", "angular", "svelte",
+    "tailwind", "node.js",
+
+    # Validation, quality, observability
+    "pydantic", "great expectations", "data quality",
+    "data observability",
+
+    # Practices
+    "agile", "scrum", "tdd", "system design", "distributed systems",
 ]
 
 
@@ -125,10 +185,10 @@ def categorize_skill(skill):
         return "other"
 
 
-# ── Claude extraction agent ───────────────────────────────────────────────
+# ── Claude extraction ───────────────────────────────────────────────
 def extract_cv_data_with_claude(raw_text):
     """
-    Agent 2: CV Extractor.
+    LLM Extraction 2: CV Extractor.
     Sends the CV text to Claude Haiku.
     Claude extracts all structured data and returns clean JSON.
     Much more accurate than regex or SpaCy for CV parsing.
@@ -227,16 +287,24 @@ def compute_file_hash(file_bytes: bytes) -> str:
     return hashlib.sha256(file_bytes).hexdigest()
 
 def delete_cv_data(submission_id: str):
-    """Removes all bronze records for a given submission_id."""
+    """
+    Removes all bronze records for a given submission_id.
+    Uses parameterized SQL to avoid injection on names with apostrophes.
+    """
     client = bigquery.Client(project=PROJECT_ID)
-    
-    tables = ["raw_candidates", "raw_work_experience", "raw_skills"]
+    tables = ["raw_cv_texts", "raw_candidates", "raw_work_experience", "raw_skills"]
+
     for table in tables:
         query = f"""
             DELETE FROM `{PROJECT_ID}.{BRONZE_DATASET}.{table}`
-            WHERE submission_id = '{submission_id}'
+            WHERE submission_id = @submission_id
         """
-        client.query(query).result()
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("submission_id", "STRING", submission_id),
+            ]
+        )
+        client.query(query, job_config=job_config).result()
 
 def get_processed_versions(table, id_col="submission_id", hash_col="content_hash"):
     """
@@ -268,7 +336,7 @@ def extract_raw_text():
     results = []
     
     # Now returns dict: {submission_id: content_hash}
-    existing = get_processed_versions("raw_candidates")
+    existing = get_processed_versions("raw_cv_texts")
     log.info(f"Already processed: {len(existing)} CVs")
     
     for folder in ["inconsistent", "legitimate"]:
@@ -305,13 +373,11 @@ def extract_raw_text():
                     continue
                 
                 profile_type = classify_profile(raw_text)
-                seniority = detect_seniority(raw_text)
                 
                 row = {
                     "submission_id": submission_id,
                     "content_hash": current_hash,  # new field
                     "profile_type": profile_type,
-                    "seniority_detected": seniority,
                     "cv_file_path": f"gs://{BUCKET_NAME}/{blob.name}",
                     "submission_timestamp": datetime.now(timezone.utc).isoformat(),
                     "raw_text": raw_text,
@@ -324,16 +390,16 @@ def extract_raw_text():
                 log.error(f"[FAIL] {filename}: {e}")
     
     if results:
-        table_id = f"{PROJECT_ID}.{BRONZE_DATASET}.raw_candidates"
+        table_id = f"{PROJECT_ID}.{BRONZE_DATASET}.raw_cv_texts"
         insert_rows_to_bigquery(table_id, results)
         log.info(f"Inserted {len(results)} rows")
     
     return results
-# ── ASSET 2: extract_entities (AI Agent) ─────────────────────────────────
+# ── ASSET 2: extract_entities (LLM Extraction) ─────────────────────────────────
 @asset
 def extract_entities(extract_raw_text):
     """
-    Agent 2: CV Extractor.
+    LLM Extraction 2: CV Extractor.
     Uses Claude Haiku to extract structured entities from each CV.
     No regex parsing, no SpaCy for companies or dates.
     Claude understands CV context and returns clean JSON.
@@ -343,6 +409,7 @@ def extract_entities(extract_raw_text):
 
     work_experience_rows = []
     skills_rows = []
+    candidate_rows = []
 
     existing_exp = get_processed_versions("raw_work_experience")
     log.info(f"Already processed experiences: {len(existing_exp)}")
@@ -365,57 +432,57 @@ def extract_entities(extract_raw_text):
 
         try:
             # call Claude to extract all entities
-            log.info(f"[AGENT] Extracting entities from {submission_id}...")
+            log.info(f"[LLM Extraction] Extracting entities from {submission_id}...")
             cv_data = extract_cv_data_with_claude(raw_text)
 
-            # extract contact info from Claude response
-            candidate_name = cv_data.get("candidate_name", "")
-            email = cv_data.get("email", "")
-            phone = cv_data.get("phone", "")
-            linkedin = cv_data.get("linkedin", "")
-            github = cv_data.get("github", "")
+            # Contact info — attributes, not .get()
+            candidate_name = cv_data.candidate_name
+            email = cv_data.email
+            phone = cv_data.phone
+            linkedin = cv_data.linkedin
+            github = cv_data.github
 
-            # build work experience rows
-            work_experience_list = cv_data.get("work_experience", [])
-            for idx in range(len(work_experience_list)):
-                exp = work_experience_list[idx]
+            candidate_rows.append({
+                "submission_id": submission_id,
+                "candidate_name": candidate_name,
+                "email": email,
+                "phone": phone,
+                "linkedin": linkedin,
+                "github": github,
+                "extracted_at": datetime.now(timezone.utc).isoformat(),
+            })
+
+            # Work experience — iterate over Pydantic models
+            for idx, exp in enumerate(cv_data.work_experience):
                 experience_row = {
-                    "experience_id": submission_id + "_job" + str(idx + 1),
+                    "experience_id": f"{submission_id}_job{idx + 1}",
                     "submission_id": submission_id,
-                    "company_name": exp.get("company_name", ""),
-                    "company_website": exp.get("company_website", ""),
-                    "job_title": exp.get("job_title", ""),
-                    "location": exp.get("location", ""),
-                    "start_date_raw": exp.get("start_date", ""),
-                    "end_date_raw": exp.get("end_date", "Present"),
-                    "description": exp.get("description", ""),
-                    "is_current": exp.get("is_current", False),
+                    "company_name": exp.company_name,
+                    "company_website": exp.company_website,
+                    "job_title": exp.job_title,
+                    "location": exp.location,
+                    "start_date_raw": exp.start_date,
+                    "end_date_raw": exp.end_date,
+                    "description": exp.description,
+                    "is_current": exp.is_current,
                 }
                 work_experience_rows.append(experience_row)
 
-            # build skills rows
-            skills_list = cv_data.get("skills", [])
-            for skill in skills_list:
-                skill_id = submission_id + "_" + skill.lower().replace(" ", "_")
-                skill_row = {
+            # Skills
+            for skill in cv_data.skills:
+                skill_id = f"{submission_id}_{skill.lower().replace(' ', '_')}"
+                skills_rows.append({
                     "skill_id": skill_id,
                     "submission_id": submission_id,
                     "skill_name": skill,
                     "skill_category": categorize_skill(skill),
-                }
-                skills_rows.append(skill_row)
+                })
 
-            # save extracted entities to GCS as backup
+            # For the GCS backup, dump to dict
             save_json_to_gcs(
                 {
                     "submission_id": submission_id,
-                    "candidate_name": candidate_name,
-                    "email": email,
-                    "phone": phone,
-                    "linkedin": linkedin,
-                    "github": github,
-                    "work_experience": work_experience_list,
-                    "skills": skills_list,
+                    **cv_data.model_dump(),
                     "extracted_at": datetime.now(timezone.utc).isoformat(),
                 },
                 f"cvs/extracted/entities/{submission_id}.json"
@@ -423,26 +490,36 @@ def extract_entities(extract_raw_text):
 
             log.info(
                 f"[OK] {submission_id} → "
-                f"{len(work_experience_list)} jobs, "
-                f"{len(skills_list)} skills"
+                f"{len(cv_data.work_experience)} jobs, "
+                f"{len(cv_data.skills)} skills"
             )
 
-        except Exception as e:
+        except ValidationError as e:
             log.error(f"[FAIL] {submission_id}: {e}")
 
-    # insert work experience into BigQuery
-    if len(work_experience_rows) > 0:
-        table_id = f"{PROJECT_ID}.{BRONZE_DATASET}.raw_work_experience"
-        insert_rows_to_bigquery(table_id, work_experience_rows)
+    if candidate_rows:
+        insert_rows_to_bigquery(
+            f"{PROJECT_ID}.{BRONZE_DATASET}.raw_candidates",
+            candidate_rows,
+        )
+        log.info(f"Inserted {len(candidate_rows)} rows into raw_candidates")
+
+    if work_experience_rows:
+        insert_rows_to_bigquery(
+            f"{PROJECT_ID}.{BRONZE_DATASET}.raw_work_experience",
+            work_experience_rows,
+        )
         log.info(f"Inserted {len(work_experience_rows)} rows into raw_work_experience")
 
-    # insert skills into BigQuery
-    if len(skills_rows) > 0:
-        table_id = f"{PROJECT_ID}.{BRONZE_DATASET}.raw_skills"
-        insert_rows_to_bigquery(table_id, skills_rows)
+    if skills_rows:
+        insert_rows_to_bigquery(
+            f"{PROJECT_ID}.{BRONZE_DATASET}.raw_skills",
+            skills_rows,
+        )
         log.info(f"Inserted {len(skills_rows)} rows into raw_skills")
 
     return {
+        "candidates_count": len(candidate_rows),
         "work_experience_count": len(work_experience_rows),
         "skills_count": len(skills_rows),
     }

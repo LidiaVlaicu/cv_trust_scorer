@@ -51,35 +51,19 @@ def main():
     try:
         result = extract_cv_data_with_claude(raw_text)
         
-        # If extract_cv_data_with_claude returns a dict (not yet Pydantic-integrated):
-        if isinstance(result, dict):
-            print("Result is a dict (extraction not yet using Pydantic)")
-            print(f"Keys: {list(result.keys())}")
-            
-            # Try validating manually
-            print("\nValidating manually with ExtractedCV...")
-            validated = ExtractedCV(**result)
-            print("✓ Validation passed")
-            print(f"  candidate_name: {validated.candidate_name}")
-            print(f"  jobs: {len(validated.work_experience)}")
-            print(f"  skills: {len(validated.skills)}")
+        assert isinstance(result, ExtractedCV), f"Expected ExtractedCV, got {type(result)}"
+        assert result.candidate_name, "candidate_name is empty"
+        assert len(result.work_experience) > 0, "no work experience extracted"
         
-        # If it returns an ExtractedCV (integrated):
-        elif isinstance(result, ExtractedCV):
-            print("✓ Result is already a validated ExtractedCV")
-            print(f"  candidate_name: {result.candidate_name}")
-            print(f"  jobs: {len(result.work_experience)}")
-            print(f"  skills: {len(result.skills)}")
-        
-        else:
-            print(f"Unexpected type: {type(result)}")
+        print(f"✓ {test_blob.name}: {result.candidate_name}, "
+            f"{len(result.work_experience)} jobs, {len(result.skills)} skills")
     
     except ValidationError as e:
-        print(f"✗ Pydantic validation failed:")
+        print(f"Pydantic validation failed:")
         print(e.json(indent=2))
     
     except Exception as e:
-        print(f"✗ Other error: {type(e).__name__}: {e}")
+        print(f"Other error: {type(e).__name__}: {e}")
 
 
 if __name__ == "__main__":
