@@ -1,5 +1,5 @@
 """
-REST client for the Companies House API.
+REST client for the Company House API.
 """
 
 import os
@@ -7,7 +7,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from companies_house.models import (
+from .models import (
     CompanySearchResponse,
     CompanySearchResult,
 )
@@ -19,8 +19,8 @@ SEARCH_ENDPOINT = "/search/companies"
 TIMEOUT_SECONDS = 30
 
 
-class CompaniesHouseClient:
-    """Client responsible for communicating with the Companies House API."""
+class CompanyHouseClient:
+    """Client responsible for communicating with the Company House API."""
 
     def __init__(self) -> None:
         self.api_key = os.getenv("COMPANIES_HOUSE_API_KEY")

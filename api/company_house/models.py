@@ -1,5 +1,5 @@
 """
-Pydantic models for the Companies House API.
+Pydantic models for the Company House API.
 """
 
 from pydantic import BaseModel

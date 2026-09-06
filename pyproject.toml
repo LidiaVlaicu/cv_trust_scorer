@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cv_trust_scorer"
+version = "0.1.0"
+description = "CV Trust Scorer — ingestion, extraction and inconsistency signals for technical CVs"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [ { name = "Lidia Danilov" } ]
+
+dependencies = [
+  "pymupdf",
+  "spacy",
+  "transformers",
+  "torch",
+  "fastapi",
+  "uvicorn",
+  "streamlit",
+  "dagster",
+  "dagster-webserver",
+  "dbt-bigquery",
+  "requests",
+  "python-magic",
+  "pydantic-ai",
+  "google-cloud-storage",
+  "google-cloud-bigquery",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "ruff", "isort", "pre-commit"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+select = ["E", "W", "F", "I", "R"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["api*", "orchestration*", "app*", "ingestion*", "scripts*"]

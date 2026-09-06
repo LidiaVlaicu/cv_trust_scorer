@@ -1,11 +1,11 @@
 """
-Standalone test for the Companies House client.
+Standalone test for the Companies House client (moved to `scripts/`).
 """
 
 from pprint import pprint
 import argparse
 
-from companies_house.ingestion import fetch_company
+from api.company_house.ingestion import fetch_company
 
 
 def main():
@@ -23,6 +23,7 @@ def main():
     for company in results:
         pprint(company.model_dump())
         print("-" * 80)
+
 
 if __name__ == "__main__":
     main()
