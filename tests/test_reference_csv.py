@@ -7,15 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from ingestion.reference_csv import ReferenceDataError, parse_reference_csv
+from reference import JOB_TITLES_CSV, LOCATION_ALIASES_CSV
+from reference.parsing.reference_csv import ReferenceDataError, parse_reference_csv
 from orchestration.assets.transformations import (
     build_work_experience_reference,
     standardize_job_title,
 )
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-JOB_TITLES_CSV = REPO_ROOT / "job_titles_review.csv"
-LOCATION_ALIASES_CSV = REPO_ROOT / "location_aliases_review.csv"
 
 
 def _parse(path: Path, required_columns: list[str], key_column: str) -> list[dict]:

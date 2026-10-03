@@ -18,7 +18,7 @@ from collections import Counter, defaultdict
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from orchestration.assets import seniority_ladder as ladder
+from reference import seniority_ladder as ladder
 from orchestration.assets.signal_responsibility_mismatch import (
     budget_millions,
     people_managed,

@@ -21,11 +21,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from ingestion.taxonomy_csv import parse_taxonomy_csv, to_bigquery_rows
+from reference import SKILLS_TAXONOMY_CSV
+from reference.parsing.taxonomy_csv import parse_taxonomy_csv, to_bigquery_rows
 
 load_dotenv()
 
-TAXONOMY_CSV_PATH = Path(__file__).resolve().parent.parent / "skills_taxonomy_review.csv"
+TAXONOMY_CSV_PATH = SKILLS_TAXONOMY_CSV
 
 DIM_SKILLS_TABLE = "dim_skills"
 DIM_SKILLS_SCHEMA = [

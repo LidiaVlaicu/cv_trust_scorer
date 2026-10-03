@@ -24,13 +24,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from ingestion.reference_csv import ReferenceDataError, parse_reference_csv
+from reference import LOCATION_ALIASES_CSV
+from reference.parsing.reference_csv import ReferenceDataError, parse_reference_csv
 
 load_dotenv()
 
-LOCATION_ALIASES_CSV_PATH = (
-    Path(__file__).resolve().parent.parent / "location_aliases_review.csv"
-)
+LOCATION_ALIASES_CSV_PATH = LOCATION_ALIASES_CSV
 
 DIM_LOCATION_ALIASES_TABLE = "dim_location_aliases"
 DIM_LOCATION_ALIASES_SCHEMA = [

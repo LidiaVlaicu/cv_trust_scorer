@@ -5,7 +5,7 @@ Source: Eden Capital Careers, "Engineering Titles Explained".
 If a value here changes, the guide it came from must have changed too.
 """
 
-from orchestration.assets import seniority_ladder as ladder
+from reference import seniority_ladder as ladder
 
 
 def test_the_minimums_are_the_published_lower_bounds():

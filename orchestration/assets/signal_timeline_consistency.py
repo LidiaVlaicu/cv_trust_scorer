@@ -15,7 +15,7 @@ Four checks, all pure date arithmetic:
     2. unexplained gaps         months with no role at all
     3. seniority reached too fast   a level claimed far earlier than the
                                     published ladder allows for
-                                    (orchestration/assets/seniority_ladder.py)
+                                    (reference/seniority_ladder.py)
     4. multiple current roles   more than one role marked as ongoing
 
 Each finding carries an `evidence` strength measured on the 300 labelled CVs
@@ -47,7 +47,7 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from orchestration.assets import seniority_ladder as ladder
+from reference import seniority_ladder as ladder
 
 SIGNAL_TABLE = "signal_timeline_consistency"
 SIGNAL_SCHEMA = [
@@ -86,7 +86,7 @@ GAP_FLAG_MONTHS = 6
 LONG_GAP_FLAG_MONTHS = 12
 
 # Months of prior experience the published ladder expects before each level
-# (orchestration/assets/seniority_ladder.py). These MEASURE a shortfall; they
+# (reference/seniority_ladder.py). These MEASURE a shortfall; they
 # are not the flag threshold - see SENIORITY_SHORTFALL_FLAG_MONTHS. Levels
 # absent from the ladder are never flagged.
 MIN_EXPERIENCE_MONTHS = ladder.MIN_EXPERIENCE_MONTHS

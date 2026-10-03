@@ -7,7 +7,7 @@ claimed in a role description contradict the seniority of its job title?
 The timeline signal reads dates. This one reads what the candidate says they
 were responsible for, and compares it against the scope the published ladder
 assigns to the title they gave themselves
-(orchestration/assets/seniority_ladder.py):
+(reference/seniority_ladder.py):
 
     E1  Intern / Graduate     work is checked before it ships
     E2  Junior                assigned tasks, with review; no design ownership
@@ -69,7 +69,7 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from orchestration.assets import seniority_ladder as ladder
+from reference import seniority_ladder as ladder
 
 SIGNAL_TABLE = "signal_responsibility_mismatch"
 SIGNAL_SCHEMA = [

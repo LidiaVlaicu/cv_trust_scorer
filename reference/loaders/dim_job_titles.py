@@ -25,11 +25,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from ingestion.reference_csv import parse_reference_csv
+from reference import JOB_TITLES_CSV
+from reference.parsing.reference_csv import parse_reference_csv
 
 load_dotenv()
 
-JOB_TITLES_CSV_PATH = Path(__file__).resolve().parent.parent / "job_titles_review.csv"
+JOB_TITLES_CSV_PATH = JOB_TITLES_CSV
 
 DIM_JOB_TITLES_TABLE = "dim_job_titles"
 DIM_JOB_TITLES_SCHEMA = [
