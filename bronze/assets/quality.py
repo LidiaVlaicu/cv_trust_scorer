@@ -12,11 +12,12 @@ Bronze stores what arrived and corrects nothing, so these do NOT check whether
 a value is plausible - that is silver's job. They check only that the rows can
 be used at all:
 
-    keys        a NULL or blank id breaks every downstream join
+    ids         a NULL or blank id breaks every downstream join
     content     a CV with no text, or a role with no employer, cannot be read
     uniqueness  a duplicated id silently multiplies rows in every join
-    integrity   an entity row whose submission_id is absent from raw_cv_texts
-                is an orphan, which the delete-and-reprocess path could create
+    cv links    an entity row whose submission_id is absent from raw_cv_texts
+                belongs to no CV, which the delete-and-reprocess path could
+                create and which then disappears from every join
 
 Columns that are legitimately empty are NOT checked, because a check that
 always fails gets ignored. Measured on the current 300 CVs:
@@ -25,7 +26,7 @@ always fails gets ignored. Measured on the current 300 CVs:
     company_website    3% empty  - not always on a CV
     location         0.3% empty
 
-Severity: a broken key or a duplicate is ERROR, because silver cannot be
+Severity: a broken id or a duplicate is ERROR, because silver cannot be
 trusted afterwards. Missing content is WARN - one unreadable CV among 300 is
 worth seeing, not worth stopping the pipeline for.
 """
@@ -71,8 +72,8 @@ def _duplicate_count(table: str, column: str) -> int:
     """)
 
 
-def _orphan_count(table: str) -> int:
-    """Rows whose submission_id has no matching CV in raw_cv_texts."""
+def _rows_with_no_matching_cv(table: str) -> int:
+    """Rows whose submission_id does not exist in raw_cv_texts."""
     return _scalar(f"""
         SELECT COUNT(*) FROM {_table(table)} t
         LEFT JOIN {_table("raw_cv_texts")} c USING (submission_id)
@@ -112,13 +113,15 @@ def raw_cv_texts_is_usable():
 
 # ── the three entity tables, written by extract_entities ──────────────────
 @asset_check(asset="extract_entities", blocking=True)
-def entity_keys_are_sound():
+def entity_ids_are_unique_and_linked():
     """
-    Ids must be present and unique, and must point at a real CV.
+    Every entity row needs an id, no id may repeat, and each row must belong
+    to a CV that exists in raw_cv_texts.
 
-    An orphan row is the specific failure the reprocessing path can cause:
-    delete_cv_data removes a changed CV from every bronze table, so a partial
-    failure between the delete and the re-insert would leave entities behind.
+    That last part guards a real failure path: delete_cv_data removes a
+    changed CV from every bronze table, so a crash between the delete and the
+    re-insert would leave rows behind that belong to no CV. Those rows then
+    vanish from any join silver makes, silently shrinking the data.
     """
     return _result(
         {
@@ -134,12 +137,15 @@ def entity_keys_are_sound():
                 _blank_count("raw_skills", "skill_id"),
             "raw_skills: duplicate skill_id":
                 _duplicate_count("raw_skills", "skill_id"),
-            "raw_candidates: orphaned": _orphan_count("raw_candidates"),
-            "raw_work_experience: orphaned": _orphan_count("raw_work_experience"),
-            "raw_skills: orphaned": _orphan_count("raw_skills"),
+            "raw_candidates: no matching CV":
+                _rows_with_no_matching_cv("raw_candidates"),
+            "raw_work_experience: no matching CV":
+                _rows_with_no_matching_cv("raw_work_experience"),
+            "raw_skills: no matching CV":
+                _rows_with_no_matching_cv("raw_skills"),
         },
         severity=AssetCheckSeverity.ERROR,
-        subject="entity keys and references",
+        subject="entity ids and CV links",
     )
 
 
