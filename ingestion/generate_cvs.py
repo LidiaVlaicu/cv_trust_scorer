@@ -43,6 +43,7 @@ ROLES = [
     "DevOps Engineer", "Software Engineer", "Backend Engineer",
     "Frontend Engineer", "Full Stack Engineer", "Data Analyst",
     "BI Analyst", "Staff Engineer", "Principal Engineer", "Research Engineer",
+    "Forward Deployed Engineer"
 ]
 
 SENIOR_ONLY_ROLES = ["Staff Engineer", "Principal Engineer"]

@@ -4,6 +4,7 @@ import fitz
 import anthropic
 import hashlib
 from dagster import asset, get_dagster_logger
+from google.api_core.exceptions import NotFound
 from google.cloud import storage, bigquery
 from datetime import datetime, timezone
 import os
@@ -149,40 +150,77 @@ def detect_seniority(text):
 
 
 # ── Skill categoriser ─────────────────────────────────────────────────────
-def categorize_skill(skill):
-    """
-    Assigns a category to a technical skill.
-    Returns: language, cloud, framework, devops, or other.
-    """
-    languages = [
-        "Python", "SQL", "Scala", "Java", "Go", "Rust",
-        "TypeScript", "JavaScript", "Bash", "R", "PySpark"
-    ]
-    cloud = [
-        "AWS", "GCP", "Azure", "BigQuery", "Snowflake",
-        "Databricks", "Redshift", "Athena"
-    ]
-    frameworks = [
-        "Spark", "Kafka", "Airflow", "dbt", "Dagster",
-        "TensorFlow", "PyTorch", "scikit-learn", "FastAPI",
-        "Django", "React", "Vue.js", "Next.js", "LangChain",
-        "LlamaIndex", "HuggingFace", "MLflow"
-    ]
-    devops = [
-        "Docker", "Kubernetes", "Terraform", "GitHub Actions",
-        "ArgoCD", "Helm", "Prometheus", "Grafana"
-    ]
+# Normalized (lowercase, stripped) skill name -> category. A single lookup
+# table instead of per-category if/elif lists, so adding a skill is one line
+# and matching is case-insensitive (the previous version compared exact
+# strings, so "python" or "PostgreSQL" as extracted by Claude never matched
+# "Python" / not present at all, and fell into "other").
+_SKILL_CATEGORIES: dict[str, str] = {
+    # languages
+    "python": "language", "sql": "language", "scala": "language", "java": "language",
+    "go": "language", "golang": "language", "rust": "language", "typescript": "language",
+    "javascript": "language", "js": "language", "bash": "language", "shell": "language",
+    "r": "language", "c++": "language", "c#": "language", "pyspark": "language",
 
-    if skill in languages:
-        return "language"
-    elif skill in cloud:
-        return "cloud"
-    elif skill in frameworks:
-        return "framework"
-    elif skill in devops:
-        return "devops"
-    else:
-        return "other"
+    # cloud platforms & managed services
+    "aws": "cloud", "gcp": "cloud", "google cloud": "cloud", "azure": "cloud",
+    "s3": "cloud", "ec2": "cloud", "lambda": "cloud", "cloud run": "cloud",
+    "dataflow": "cloud", "vertex ai": "cloud", "gcs": "cloud", "sagemaker": "cloud",
+    "azure data factory": "cloud", "azure synapse": "cloud", "azure databricks": "cloud",
+
+    # databases & warehouses
+    "postgres": "database", "postgresql": "database", "mysql": "database",
+    "mongodb": "database", "redis": "database", "elasticsearch": "database",
+    "cassandra": "database", "bigquery": "database", "snowflake": "database",
+    "databricks": "database", "redshift": "database", "athena": "database",
+
+    # data engineering
+    "spark": "data_engineering", "kafka": "data_engineering", "airflow": "data_engineering",
+    "dbt": "data_engineering", "dagster": "data_engineering", "prefect": "data_engineering",
+    "fivetran": "data_engineering", "airbyte": "data_engineering",
+    "etl": "data_engineering", "elt": "data_engineering",
+
+    # BI & analytics
+    "tableau": "bi_analytics", "looker": "bi_analytics", "looker studio": "bi_analytics",
+    "power bi": "bi_analytics", "powerbi": "bi_analytics", "qlik": "bi_analytics",
+    "metabase": "bi_analytics", "superset": "bi_analytics", "excel": "bi_analytics",
+    "dax": "bi_analytics",
+
+    # ML & AI
+    "machine learning": "ml_ai", "deep learning": "ml_ai", "tensorflow": "ml_ai",
+    "pytorch": "ml_ai", "scikit-learn": "ml_ai", "sklearn": "ml_ai", "xgboost": "ml_ai",
+    "huggingface": "ml_ai", "transformers": "ml_ai", "pandas": "ml_ai", "numpy": "ml_ai",
+    "mlflow": "ml_ai", "llm": "ml_ai", "nlp": "ml_ai", "rag": "ml_ai",
+    "langchain": "ml_ai", "llamaindex": "ml_ai", "openai": "ml_ai",
+    "anthropic": "ml_ai", "claude": "ml_ai",
+
+    # DevOps & infra
+    "docker": "devops", "kubernetes": "devops", "k8s": "devops", "terraform": "devops",
+    "helm": "devops", "ansible": "devops", "prometheus": "devops", "grafana": "devops",
+    "github actions": "devops", "gitlab ci": "devops", "jenkins": "devops",
+    "argocd": "devops", "ci/cd": "devops", "git": "devops", "github": "devops", "gitlab": "devops",
+
+    # web frameworks
+    "fastapi": "web", "django": "web", "flask": "web", "spring boot": "web",
+    "express": "web", "nestjs": "web", "react": "web", "next.js": "web", "nextjs": "web",
+    "vue": "web", "vue.js": "web", "angular": "web", "svelte": "web",
+    "node.js": "web", "nodejs": "web", "graphql": "web", "rest": "web", "grpc": "web",
+
+    # practices
+    "agile": "practices", "scrum": "practices", "tdd": "practices",
+    "system design": "practices", "distributed systems": "practices",
+    "a/b testing": "practices", "ab testing": "practices", "a/b test": "practices",
+}
+
+
+def categorize_skill(skill: str) -> str:
+    """
+    Assigns a category to a technical skill via normalized lookup.
+    Falls back to "other" for anything not in the known taxonomy
+    (an open vocabulary is expected — "other" isn't itself a bug).
+    """
+    normalized = skill.strip().lower()
+    return _SKILL_CATEGORIES.get(normalized, "other")
 
 
 # ── Claude extraction ───────────────────────────────────────────────
@@ -309,7 +347,10 @@ def delete_cv_data(submission_id: str):
 def get_processed_versions(table, id_col="submission_id", hash_col="content_hash"):
     """
     Returns {submission_id: content_hash} of already-processed CVs.
-    Returns empty dict if table doesn't exist or query fails.
+    Returns empty dict if the table doesn't exist yet (first run).
+    Only call this for tables that actually have a `hash_col` column
+    (currently just raw_cv_texts) — see get_processed_submission_ids for
+    tables without a hash column.
     """
     client = bigquery.Client(project=PROJECT_ID)
     query = f"""
@@ -319,8 +360,49 @@ def get_processed_versions(table, id_col="submission_id", hash_col="content_hash
     try:
         rows = client.query(query).result()
         return {row[id_col]: row[hash_col] for row in rows}
-    except Exception:
+    except NotFound:
         return {}
+
+
+def get_all_cv_texts():
+    """
+    Returns every row currently in raw_cv_texts, queried fresh from BigQuery.
+
+    Used as the input source for extract_entities instead of the
+    extract_raw_text Dagster input, because that input is only whatever
+    extract_raw_text happened to return on its *last* run (newly-processed
+    CVs only) — not the full current set. Querying the table directly means
+    extract_entities always sees the real, current list of CVs.
+    """
+    client = bigquery.Client(project=PROJECT_ID)
+    query = f"""
+        SELECT submission_id, profile_type, raw_text
+        FROM `{PROJECT_ID}.{BRONZE_DATASET}.raw_cv_texts`
+    """
+    rows = client.query(query).result()
+    return [dict(row) for row in rows]
+
+
+def get_processed_submission_ids(table, id_col="submission_id"):
+    """
+    Returns the set of submission_ids already present in `table`.
+
+    Used for tables with no content_hash column (raw_work_experience,
+    raw_skills). Change-detection already happened in extract_raw_text:
+    a changed CV has its rows deleted from every bronze table via
+    delete_cv_data before extract_entities runs, so "submission_id is
+    already present" is sufficient to mean "already processed and unchanged".
+    """
+    client = bigquery.Client(project=PROJECT_ID)
+    query = f"""
+        SELECT DISTINCT {id_col}
+        FROM `{PROJECT_ID}.{BRONZE_DATASET}.{table}`
+    """
+    try:
+        rows = client.query(query).result()
+        return {row[id_col] for row in rows}
+    except NotFound:
+        return set()
 
 # ── ASSET 1: extract_raw_text ─────────────────────────────────────────────
 @asset
@@ -396,14 +478,19 @@ def extract_raw_text():
     
     return results
 # ── ASSET 2: extract_entities (LLM Extraction) ─────────────────────────────────
-@asset
-def extract_entities(extract_raw_text):
+@asset(deps=["extract_raw_text"])
+def extract_entities():
     """
     LLM Extraction 2: CV Extractor.
     Uses Claude Haiku to extract structured entities from each CV.
     No regex parsing, no SpaCy for companies or dates.
     Claude understands CV context and returns clean JSON.
     Loads into BigQuery Bronze raw_work_experience and raw_skills.
+
+    Reads the current CV list directly from raw_cv_texts (not as a Dagster
+    input from extract_raw_text) so this asset always processes the real,
+    full set of CVs rather than whatever extract_raw_text's last run
+    happened to return.
     """
     log = get_dagster_logger()
 
@@ -411,10 +498,13 @@ def extract_entities(extract_raw_text):
     skills_rows = []
     candidate_rows = []
 
-    existing_exp = get_processed_versions("raw_work_experience")
+    existing_exp = get_processed_submission_ids("raw_work_experience")
     log.info(f"Already processed experiences: {len(existing_exp)}")
 
-    for record in extract_raw_text:
+    all_cvs = get_all_cv_texts()
+    log.info(f"CVs in raw_cv_texts: {len(all_cvs)}")
+
+    for record in all_cvs:
 
         # skip non-technical profiles
         if record["profile_type"] == "non_technical":

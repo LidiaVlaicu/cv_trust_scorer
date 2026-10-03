@@ -13,3 +13,6 @@ python-magic
 pydantic-ai
 google-cloud-storage
 google-cloud-bigquery
+rapidfuzz
+phonenumbers
+pytest
