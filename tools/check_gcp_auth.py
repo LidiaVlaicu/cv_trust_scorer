@@ -1,8 +1,13 @@
 """
-Verifies that GCP authentication is correctly configured for impersonation.
+Checks that GCP authentication is correctly configured for impersonation.
 
-Run after setting up authentication or when debugging auth issues:
-    python scripts/verify_auth.py
+Run after setting up credentials, or when the pipeline starts failing with
+permission errors:
+
+    python tools/check_gcp_auth.py
+
+Prints who you are authenticated as and exits non-zero if that turns out to
+be a human account rather than the service account the pipeline expects.
 """
 from google.cloud import bigquery
 from google.auth import default

@@ -57,6 +57,7 @@ external/companies_house/   Third-party API client
 evaluation/                 Precision/recall harnesses, one per signal
 dataset/                    How the thesis corpus was made
 pipeline/definitions.py     Dagster wiring, and nothing else
+tools/                      Run by hand: setup checks and probes (see its README)
 tests/                      Mirrors the tree above
 ```
 

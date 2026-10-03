@@ -1,5 +1,11 @@
 """
-Standalone test for the Companies House client (moved to `scripts/`).
+Looks a company up in Companies House and prints what comes back.
+
+For checking by hand what the API returns for a given name - useful when a
+company in a CV is not matching, to see whether the API knows it at all and
+under what spelling. Reads only; writes nothing.
+
+    python tools/lookup_company.py "TechVault Solutions Ltd"
 """
 
 from pprint import pprint

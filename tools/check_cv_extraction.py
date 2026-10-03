@@ -1,15 +1,16 @@
 """
-Test that Pydantic validation works on a real Claude extraction.
+Checks that Claude extraction still satisfies the ExtractedCV contract.
 
-Picks one PDF from GCS, runs through extraction, validates with Pydantic.
-Does NOT write to BigQuery. Just prints the result.
+Takes one real PDF from GCS, runs the extraction, and validates the result.
+Costs one Claude call and writes nothing to BigQuery, so it is the cheap way
+to tell whether a prompt or model change has broken the shape the bronze
+layer depends on.
+
+    python tools/check_cv_extraction.py
 """
-import sys
 import os
-from dotenv import load_dotenv
 
-# Add project root to path so we can import dagster.assets
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from dotenv import load_dotenv
 
 load_dotenv()
 
