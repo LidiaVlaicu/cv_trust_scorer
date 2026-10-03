@@ -82,15 +82,15 @@ def _rows_with_no_matching_cv(table: str) -> int:
 
 
 def _result(failures: dict[str, int], *, severity: AssetCheckSeverity, subject: str):
-    """One AssetCheckResult from {description: offending row count}."""
-    offenders = {name: count for name, count in failures.items() if count}
+    """One AssetCheckResult from {problem description: number of rows affected}."""
+    problems = {name: count for name, count in failures.items() if count}
     return AssetCheckResult(
-        passed=not offenders,
+        passed=not problems,
         severity=severity,
-        metadata={"offending_rows": offenders or "none", "checked": subject},
+        metadata={"problems_found": problems or "none", "checked": subject},
         description=(
-            f"{subject}: " + ", ".join(f"{n} ({c} rows)" for n, c in offenders.items())
-            if offenders else f"{subject}: all rows usable"
+            f"{subject}: " + ", ".join(f"{n} ({c} rows)" for n, c in problems.items())
+            if problems else f"{subject}: all rows usable"
         ),
     )
 
