@@ -1,0 +1,40 @@
+"""GCS access for the bronze layer: read the PDFs, archive the raw JSON."""
+
+import json
+import os
+
+from dotenv import load_dotenv
+from google.cloud import storage
+
+load_dotenv()
+
+BUCKET_NAME = os.environ["GCS_BUCKET_NAME"]
+
+# ── GCS helpers ───────────────────────────────────────────────────────────
+def list_pdfs_in_gcs(folder):
+    """Returns a list of all PDF blobs in the given GCS folder."""
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+    all_blobs = bucket.list_blobs(prefix=f"cvs/raw/{folder}/")
+    pdf_blobs = []
+    for blob in all_blobs:
+        if blob.name.endswith(".pdf"):
+            pdf_blobs.append(blob)
+    return pdf_blobs
+
+
+def download_pdf_from_gcs(blob):
+    """Downloads a PDF from GCS and returns its bytes."""
+    return blob.download_as_bytes()
+
+
+def save_json_to_gcs(data, gcs_path):
+    """Saves a Python dictionary as a JSON file to GCS."""
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+    blob = bucket.blob(gcs_path)
+    blob.upload_from_string(
+        json.dumps(data, indent=2, default=str),
+        content_type="application/json"
+    )
+

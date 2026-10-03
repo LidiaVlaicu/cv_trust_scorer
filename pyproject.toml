@@ -49,4 +49,4 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
-include = ["api*", "orchestration*", "app*", "ingestion*", "scripts*", "reference*", "silver*", "gold*"]
+include = ["api*", "orchestration*", "app*", "ingestion*", "scripts*", "reference*", "bronze*", "silver*", "gold*"]

@@ -5,7 +5,7 @@ from gold.assets import (
     responsibility_mismatch,
     timeline_consistency,
 )
-from orchestration.assets import extraction
+from bronze.assets import cv_text, entities
 from silver.assets import (
     candidates,
     skills,
@@ -13,7 +13,8 @@ from silver.assets import (
 )
 
 all_assets = load_assets_from_modules([
-    extraction,
+    cv_text,
+    entities,
     company_verification,
     candidates,
     skills,

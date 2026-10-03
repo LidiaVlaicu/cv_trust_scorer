@@ -1,4 +1,4 @@
-from orchestration.assets.extraction import categorize_skill
+from bronze.rules.parsing import categorize_skill
 
 
 def test_exact_lowercase_match():
