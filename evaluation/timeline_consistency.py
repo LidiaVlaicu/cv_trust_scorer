@@ -37,7 +37,6 @@ def main() -> None:
     print("label split:", dict(Counter(r["folder"] for r in labelled)))
 
     positives = sum(1 for r in labelled if r["folder"] == "inconsistent")
-    negatives = len(labelled) - positives
 
     def report(name: str, fired) -> None:
         tp = sum(1 for r in labelled if fired(r) and r["folder"] == "inconsistent")

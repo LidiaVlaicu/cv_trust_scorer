@@ -19,11 +19,12 @@ the standardization could be reviewed alongside the seniority.
 Run with:  python -m reference.loaders.dim_job_titles
 """
 
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 from google.cloud import bigquery
+
+from warehouse import bigquery_client, dataset_name, replace_table, table_id
 
 from reference import JOB_TITLES_CSV
 from reference.parsing.reference_csv import parse_reference_csv
@@ -56,18 +57,18 @@ def load_dim_job_titles(csv_path: Path = JOB_TITLES_CSV_PATH) -> int:
         for entry in reviewed
     ]
 
-    client = bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-    table_id = f"{client.project}.{os.getenv('BQ_DATASET_SILVER')}.{DIM_JOB_TITLES_TABLE}"
-
-    job_config = bigquery.LoadJobConfig(
-        schema=DIM_JOB_TITLES_SCHEMA,
-        write_disposition="WRITE_TRUNCATE",
+    client = bigquery_client()
+    table = table_id(client, dataset_name("silver"), DIM_JOB_TITLES_TABLE)
+    replace_table(
+        client,
+        table,
+        rows,
+        DIM_JOB_TITLES_SCHEMA,
     )
-    client.load_table_from_json(rows, table_id, job_config=job_config).result()
 
     with_level = sum(1 for row in rows if row["seniority_level"])
     print(
-        f"Loaded {len(rows)} job titles into {table_id} "
+        f"Loaded {len(rows)} job titles into {table} "
         f"({with_level} with a seniority level, {len(rows) - with_level} without)"
     )
     return len(rows)

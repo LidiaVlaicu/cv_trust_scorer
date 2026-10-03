@@ -13,7 +13,6 @@ Because the warehouse is injected, the whole pipeline can be exercised against
 an in-memory fake; see tests/test_silver_work_experience.py.
 """
 
-import os
 from collections import Counter
 from datetime import datetime, timezone
 from typing import Callable, Protocol
@@ -21,6 +20,7 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
+from warehouse import bigquery_client, dataset_name, replace_table, table_id
 from silver.rules.work_experience import (
     WorkExperienceReference,
     build_work_experience_reference,
@@ -119,12 +119,9 @@ class BigQueryWorkExperienceWarehouse:
         bronze_dataset: str | None = None,
         silver_dataset: str | None = None,
     ) -> None:
-        self._client = client or bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-        self._bronze = bronze_dataset or os.getenv("BQ_DATASET_BRONZE")
-        self._silver = silver_dataset or os.getenv("BQ_DATASET_SILVER")
-
-    def _table(self, dataset: str, table: str) -> str:
-        return f"{self._client.project}.{dataset}.{table}"
+        self._client = bigquery_client(client)
+        self._bronze = dataset_name("bronze", bronze_dataset)
+        self._silver = dataset_name("silver", silver_dataset)
 
     def _rows(self, query: str) -> list[dict]:
         return [dict(row) for row in self._client.query(query).result()]
@@ -132,13 +129,13 @@ class BigQueryWorkExperienceWarehouse:
     def read_job_titles(self) -> list[dict]:
         return self._rows(
             f"SELECT job_title, seniority_level "
-            f"FROM `{self._table(self._silver, 'dim_job_titles')}`"
+            f"FROM `{table_id(self._client, self._silver, 'dim_job_titles')}`"
         )
 
     def read_location_aliases(self) -> list[dict]:
         return self._rows(
             f"SELECT location_token, country "
-            f"FROM `{self._table(self._silver, 'dim_location_aliases')}`"
+            f"FROM `{table_id(self._client, self._silver, 'dim_location_aliases')}`"
         )
 
     def read_raw_work_experience(self) -> list[dict]:
@@ -146,7 +143,7 @@ class BigQueryWorkExperienceWarehouse:
             SELECT experience_id, submission_id, company_name, job_title,
                    start_date_raw, end_date_raw, is_current, location,
                    description, company_website
-            FROM `{self._table(self._bronze, 'raw_work_experience')}`
+            FROM `{table_id(self._client, self._bronze, 'raw_work_experience')}`
         """)
 
     def replace_silver_work_experience(self, rows: list[dict]) -> None:
@@ -154,15 +151,12 @@ class BigQueryWorkExperienceWarehouse:
         Full refresh: bronze is the source of truth, so silver is rebuilt from
         it rather than appended to (no duplicate or stale rows on reruns).
         """
-        job_config = bigquery.LoadJobConfig(
-            schema=SILVER_WORK_EXPERIENCE_SCHEMA,
-            write_disposition="WRITE_TRUNCATE",
-        )
-        self._client.load_table_from_json(
+        replace_table(
+            self._client,
+            table_id(self._client, self._silver, SILVER_WORK_EXPERIENCE_TABLE),
             rows,
-            self._table(self._silver, SILVER_WORK_EXPERIENCE_TABLE),
-            job_config=job_config,
-        ).result()
+            SILVER_WORK_EXPERIENCE_SCHEMA,
+        )
 
 
 # ── Orchestration (dependencies injected) ─────────────────────────────────

@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
+from warehouse import bigquery_client, replace_table, table_id
+
 from silver.rules.candidates import transform_candidate_row
 
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
@@ -39,14 +41,13 @@ def _load_silver_candidates(rows: list[dict]) -> None:
     of truth, so silver is rebuilt from it each run rather than
     incrementally appended (avoids duplicate/stale rows on reprocessing).
     """
-    client = bigquery.Client(project=PROJECT_ID)
-    table_id = f"{PROJECT_ID}.{SILVER_DATASET}.silver_candidates"
-
-    job_config = bigquery.LoadJobConfig(
-        schema=SILVER_CANDIDATES_SCHEMA,
-        write_disposition="WRITE_TRUNCATE",
+    client = bigquery_client()
+    replace_table(
+        client,
+        table_id(client, SILVER_DATASET, "silver_candidates"),
+        rows,
+        SILVER_CANDIDATES_SCHEMA,
     )
-    client.load_table_from_json(rows, table_id, job_config=job_config).result()
 
 
 # ── ASSET: silver_candidates ───────────────────────────────────────────────

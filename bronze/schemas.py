@@ -10,7 +10,6 @@ Used by:
     - tests/test_schemas.py (verifies schema behavior)
 """
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
 
 
 class WorkExperienceItem(BaseModel):

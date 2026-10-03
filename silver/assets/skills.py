@@ -13,7 +13,6 @@ Because the warehouse is injected, the whole pipeline can be exercised in
 tests against an in-memory fake; see tests/test_silver_skills.py.
 """
 
-import os
 from collections import Counter
 from datetime import datetime, timezone
 from typing import Callable, Protocol
@@ -21,6 +20,7 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
+from warehouse import bigquery_client, dataset_name, replace_table, table_id
 from silver.rules.skills import (
     SkillsTaxonomy,
     build_skills_taxonomy,
@@ -97,21 +97,18 @@ class BigQuerySkillsWarehouse:
         bronze_dataset: str | None = None,
         silver_dataset: str | None = None,
     ) -> None:
-        self._client = client or bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-        self._bronze = bronze_dataset or os.getenv("BQ_DATASET_BRONZE")
-        self._silver = silver_dataset or os.getenv("BQ_DATASET_SILVER")
-
-    def _table(self, dataset: str, table: str) -> str:
-        return f"{self._client.project}.{dataset}.{table}"
+        self._client = bigquery_client(client)
+        self._bronze = dataset_name("bronze", bronze_dataset)
+        self._silver = dataset_name("silver", silver_dataset)
 
     def read_taxonomy(self) -> list[dict]:
-        query = f"SELECT alias, canonical_skill FROM `{self._table(self._silver, 'dim_skills')}`"
+        query = f"SELECT alias, canonical_skill FROM `{table_id(self._client, self._silver, 'dim_skills')}`"
         return [dict(row) for row in self._client.query(query).result()]
 
     def read_raw_skills(self) -> list[dict]:
         query = f"""
             SELECT skill_id, submission_id, skill_name
-            FROM `{self._table(self._bronze, 'raw_skills')}`
+            FROM `{table_id(self._client, self._bronze, 'raw_skills')}`
         """
         return [dict(row) for row in self._client.query(query).result()]
 
@@ -120,13 +117,12 @@ class BigQuerySkillsWarehouse:
         Full refresh: bronze is the source of truth, so silver is rebuilt from
         it rather than appended to (no duplicate or stale rows on reruns).
         """
-        job_config = bigquery.LoadJobConfig(
-            schema=SILVER_SKILLS_SCHEMA,
-            write_disposition="WRITE_TRUNCATE",
+        replace_table(
+            self._client,
+            table_id(self._client, self._silver, SILVER_SKILLS_TABLE),
+            rows,
+            SILVER_SKILLS_SCHEMA,
         )
-        self._client.load_table_from_json(
-            rows, self._table(self._silver, SILVER_SKILLS_TABLE), job_config=job_config
-        ).result()
 
 
 # ── Orchestration (dependencies injected) ─────────────────────────────────

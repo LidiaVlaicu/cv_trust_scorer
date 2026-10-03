@@ -15,11 +15,12 @@ Edit the CSV, rerun this script; history lives in git.
 Run with:  python -m reference.loaders.dim_skills
 """
 
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 from google.cloud import bigquery
+
+from warehouse import bigquery_client, dataset_name, replace_table, table_id
 
 from reference import SKILLS_TAXONOMY_CSV
 from reference.parsing.taxonomy_csv import parse_taxonomy_csv, to_bigquery_rows
@@ -40,19 +41,19 @@ def load_dim_skills(csv_path: Path = TAXONOMY_CSV_PATH) -> int:
     aliases = parse_taxonomy_csv(csv_path.read_text(encoding="utf-8"))
     rows = to_bigquery_rows(aliases)
 
-    client = bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-    table_id = f"{client.project}.{os.getenv('BQ_DATASET_SILVER')}.{DIM_SKILLS_TABLE}"
-
-    job_config = bigquery.LoadJobConfig(
-        schema=DIM_SKILLS_SCHEMA,
-        write_disposition="WRITE_TRUNCATE",
+    client = bigquery_client()
+    table = table_id(client, dataset_name("silver"), DIM_SKILLS_TABLE)
+    replace_table(
+        client,
+        table,
+        rows,
+        DIM_SKILLS_SCHEMA,
     )
-    client.load_table_from_json(rows, table_id, job_config=job_config).result()
 
     canonical_count = len({entry.canonical_skill for entry in aliases})
     print(
         f"Loaded {len(rows)} aliases covering {canonical_count} canonical skills "
-        f"into {table_id}"
+        f"into {table}"
     )
     return len(rows)
 

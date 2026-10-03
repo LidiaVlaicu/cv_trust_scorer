@@ -6,7 +6,6 @@ run function and the Dagster asset. Every rule and threshold lives in
 gold/rules/timeline_consistency.py, which this module must not duplicate.
 """
 
-import os
 from collections import Counter
 from datetime import date, datetime, timezone
 from typing import Callable, Protocol
@@ -14,7 +13,8 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from gold.rules.timeline_consistency import build_signal_rows, _role_spans
+from warehouse import bigquery_client, dataset_name, replace_table, table_id
+from gold.rules.timeline_consistency import build_signal_rows
 
 SIGNAL_TABLE = "signal_timeline_consistency"
 SIGNAL_SCHEMA = [
@@ -60,9 +60,9 @@ class BigQueryTimelineWarehouse:
         silver_dataset: str | None = None,
         gold_dataset: str | None = None,
     ) -> None:
-        self._client = client or bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-        self._silver = silver_dataset or os.getenv("BQ_DATASET_SILVER")
-        self._gold = gold_dataset or os.getenv("BQ_DATASET_GOLD")
+        self._client = bigquery_client(client)
+        self._silver = dataset_name("silver", silver_dataset)
+        self._gold = dataset_name("gold", gold_dataset)
 
     def read_work_experience(self) -> list[dict]:
         query = f"""
@@ -77,12 +77,12 @@ class BigQueryTimelineWarehouse:
         Full refresh: the signal is a pure function of silver, so it is
         recomputed rather than accumulated.
         """
-        table_id = f"{self._client.project}.{self._gold}.{SIGNAL_TABLE}"
-        job_config = bigquery.LoadJobConfig(
-            schema=SIGNAL_SCHEMA,
-            write_disposition="WRITE_TRUNCATE",
+        replace_table(
+            self._client,
+            table_id(self._client, self._gold, SIGNAL_TABLE),
+            rows,
+            SIGNAL_SCHEMA,
         )
-        self._client.load_table_from_json(rows, table_id, job_config=job_config).result()
 
 
 # ── Orchestration (dependencies injected) ─────────────────────────────────

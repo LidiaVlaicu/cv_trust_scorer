@@ -6,31 +6,25 @@ the raw JSON to GCS before loading. Skips CVs whose content hash is
 unchanged since the last run.
 """
 
-import os
 from datetime import datetime, timezone
 
 import fitz
 from dagster import asset, get_dagster_logger
 from dotenv import load_dotenv
-from pydantic import ValidationError
 
 from bronze.rules.parsing import (
-    categorize_skill,
     classify_profile,
     compute_file_hash,
-    detect_seniority,
 )
 from bronze.storage import (
+    BUCKET_NAME,
     download_pdf_from_gcs,
     list_pdfs_in_gcs,
-    save_json_to_gcs,
 )
 from bronze.warehouse import (
     BRONZE_DATASET,
     PROJECT_ID,
     delete_cv_data,
-    get_all_cv_texts,
-    get_processed_submission_ids,
     get_processed_versions,
     insert_rows_to_bigquery,
 )

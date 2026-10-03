@@ -18,11 +18,12 @@ new city needs no change to this file — only a new *country* does.
 Run with:  python -m reference.loaders.dim_location_aliases
 """
 
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 from google.cloud import bigquery
+
+from warehouse import bigquery_client, dataset_name, replace_table, table_id
 
 from reference import LOCATION_ALIASES_CSV
 from reference.parsing.reference_csv import ReferenceDataError, parse_reference_csv
@@ -57,19 +58,12 @@ def load_dim_location_aliases(csv_path: Path = LOCATION_ALIASES_CSV_PATH) -> int
         for entry in reviewed
     ]
 
-    client = bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-    table_id = (
-        f"{client.project}.{os.getenv('BQ_DATASET_SILVER')}.{DIM_LOCATION_ALIASES_TABLE}"
-    )
-
-    job_config = bigquery.LoadJobConfig(
-        schema=DIM_LOCATION_ALIASES_SCHEMA,
-        write_disposition="WRITE_TRUNCATE",
-    )
-    client.load_table_from_json(rows, table_id, job_config=job_config).result()
+    client = bigquery_client()
+    table = table_id(client, dataset_name("silver"), DIM_LOCATION_ALIASES_TABLE)
+    replace_table(client, table, rows, DIM_LOCATION_ALIASES_SCHEMA)
 
     countries = len({row["country"] for row in rows})
-    print(f"Loaded {len(rows)} location aliases covering {countries} countries into {table_id}")
+    print(f"Loaded {len(rows)} location aliases covering {countries} countries into {table}")
     return len(rows)
 
 
