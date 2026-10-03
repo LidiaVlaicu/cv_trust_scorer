@@ -5,13 +5,13 @@ fake warehouse — no BigQuery, no Dagster, no credentials.
 
 from datetime import datetime, timezone
 
-from orchestration.assets.silver_work_experience import (
+from silver.assets.work_experience import (
     SILVER_WORK_EXPERIENCE_SCHEMA,
     build_silver_work_experience_rows,
     run_silver_work_experience,
     summarize_gaps,
 )
-from orchestration.assets.transformations import build_work_experience_reference
+from silver.rules.work_experience import build_work_experience_reference
 
 FIXED_TIME = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 

@@ -6,7 +6,7 @@ The taxonomy is injected, so none of this needs BigQuery.
 
 import pytest
 
-from orchestration.assets.transformations import (
+from silver.rules.skills import (
     build_skills_taxonomy,
     clean_skill,
     normalize_skill,

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from orchestration.assets.transformations import transform_candidate_row
+from silver.rules.candidates import transform_candidate_row
 
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 BRONZE_DATASET = os.getenv("BQ_DATASET_BRONZE")

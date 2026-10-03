@@ -21,7 +21,7 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from orchestration.assets.transformations import (
+from silver.rules.skills import (
     SkillsTaxonomy,
     build_skills_taxonomy,
     clean_skill,

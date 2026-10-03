@@ -9,13 +9,13 @@ report unmatched) is verifiable in milliseconds.
 
 from datetime import datetime, timezone
 
-from orchestration.assets.silver_skills import (
+from silver.assets.skills import (
     SILVER_SKILLS_SCHEMA,
     build_silver_skills_rows,
     run_silver_skills,
     summarize_unmatched,
 )
-from orchestration.assets.transformations import build_skills_taxonomy
+from silver.rules.skills import build_skills_taxonomy
 
 FIXED_TIME = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 

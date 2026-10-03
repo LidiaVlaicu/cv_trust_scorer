@@ -5,19 +5,19 @@ from gold.assets import (
     responsibility_mismatch,
     timeline_consistency,
 )
-from orchestration.assets import (
-    extraction,
-    silver,
-    silver_skills,
-    silver_work_experience,
+from orchestration.assets import extraction
+from silver.assets import (
+    candidates,
+    skills,
+    work_experience,
 )
 
 all_assets = load_assets_from_modules([
     extraction,
     company_verification,
-    silver,
-    silver_skills,
-    silver_work_experience,
+    candidates,
+    skills,
+    work_experience,
     timeline_consistency,
     responsibility_mismatch,
 ])

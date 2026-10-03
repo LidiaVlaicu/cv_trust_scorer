@@ -9,7 +9,7 @@ from datetime import date
 
 import pytest
 
-from orchestration.assets.transformations import (
+from silver.rules.work_experience import (
     build_work_experience_reference,
     parse_cv_month,
     split_location,

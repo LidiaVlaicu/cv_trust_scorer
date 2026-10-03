@@ -17,7 +17,7 @@ from reference.parsing.taxonomy_csv import (
     parse_taxonomy_csv,
     to_bigquery_rows,
 )
-from orchestration.assets.transformations import build_skills_taxonomy, normalize_skill
+from silver.rules.skills import build_skills_taxonomy, normalize_skill
 
 _VALID_CSV = """canonical_skill,alias_count,aliases,notes
 Power BI,2,Power BI|PowerBI,

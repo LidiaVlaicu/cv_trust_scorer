@@ -21,7 +21,7 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from orchestration.assets.transformations import (
+from silver.rules.work_experience import (
     WorkExperienceReference,
     build_work_experience_reference,
     transform_work_experience_row,

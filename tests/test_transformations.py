@@ -1,4 +1,4 @@
-from orchestration.assets.transformations import (
+from silver.rules.candidates import (
     is_valid_email,
     standardize_name,
     standardize_phone,

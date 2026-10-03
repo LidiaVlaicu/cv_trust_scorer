@@ -9,7 +9,7 @@ import pytest
 
 from reference import JOB_TITLES_CSV, LOCATION_ALIASES_CSV
 from reference.parsing.reference_csv import ReferenceDataError, parse_reference_csv
-from orchestration.assets.transformations import (
+from silver.rules.work_experience import (
     build_work_experience_reference,
     standardize_job_title,
 )
