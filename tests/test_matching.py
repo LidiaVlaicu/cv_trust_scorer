@@ -1,9 +1,9 @@
-from api.company_house.matching import (
+from external.companies_house.matching import (
     classify_status,
     find_best_match,
     normalize_company_name,
 )
-from api.company_house.models import CompanySearchResult
+from external.companies_house.models import CompanySearchResult
 
 
 def _candidate(title: str, company_number: str = "12345678") -> CompanySearchResult:

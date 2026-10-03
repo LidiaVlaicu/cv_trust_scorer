@@ -97,7 +97,7 @@ NOT_CONFIRMED = "not_confirmed"
 NOT_EVALUATED = "not_evaluated"
 
 # Measured on the 300 labelled CVs. Regenerate with
-# scripts/evaluate_responsibility_signal.py after changing any threshold.
+# evaluation/responsibility_mismatch.py after changing any threshold.
 EVIDENCE = {
     # 12 of 12, against 0 of 232 legitimate E1/E2 descriptions
     "team_ownership_at_junior_level": PROVEN,

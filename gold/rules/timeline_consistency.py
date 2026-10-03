@@ -19,7 +19,7 @@ Four checks, all pure date arithmetic:
     4. multiple current roles   more than one role marked as ongoing
 
 Each finding carries an `evidence` strength measured on the 300 labelled CVs
-in bronze.raw_cv_texts (see scripts/evaluate_timeline_signal.py):
+in bronze.raw_cv_texts (see evaluation/timeline_consistency.py):
 
     proven      occurred only in known-inconsistent CVs (100% precision)
     suggestive  also occurred in legitimate CVs
@@ -103,7 +103,7 @@ NOT_CONFIRMED = "not_confirmed"  # proven evidence of an impossible timeline
 NOT_EVALUATED = "not_evaluated"  # no role could be placed on a timeline
 
 # Measured precision of each finding on the 300 labelled CVs. Regenerate with
-# scripts/evaluate_timeline_signal.py after changing any threshold.
+# evaluation/timeline_consistency.py after changing any threshold.
 EVIDENCE = {
     "employment_overlap_minor": SUGGESTIVE,  # 90% precision (9 of 10)
     "employment_overlap": PROVEN,            # 100% (8 of 8)

@@ -231,8 +231,8 @@ def silver_work_experience():
       (UK, Scotland, Northern Ireland -> United Kingdom)
 
     Load the reference tables first:
-        python -m ingestion.load_dim_job_titles
-        python -m ingestion.load_dim_location_aliases
+        python -m reference.loaders.dim_job_titles
+        python -m reference.loaders.dim_location_aliases
     """
     return run_silver_work_experience(
         BigQueryWorkExperienceWarehouse(),

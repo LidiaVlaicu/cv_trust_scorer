@@ -5,7 +5,7 @@ Standalone test for the Companies House client (moved to `scripts/`).
 from pprint import pprint
 import argparse
 
-from api.company_house.ingestion import fetch_company
+from external.companies_house.ingestion import fetch_company
 
 
 def main():

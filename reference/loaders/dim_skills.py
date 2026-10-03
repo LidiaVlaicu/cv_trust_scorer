@@ -12,7 +12,7 @@ incremental merge would leave aliases from an earlier version of the taxonomy
 behind, still pointing at canonical skills the file no longer agrees with.
 Edit the CSV, rerun this script; history lives in git.
 
-Run with:  python -m ingestion.load_dim_skills
+Run with:  python -m reference.loaders.dim_skills
 """
 
 import os

@@ -5,7 +5,7 @@ The synthetic CVs are generated into `inconsistent` and `legitimate` folders,
 recorded on bronze.raw_cv_texts. That label is the only ground truth available,
 so it is how each rule earns or loses its place in the signal.
 
-Run with:  python -m scripts.evaluate_timeline_signal
+Run with:  python -m evaluation.timeline_consistency
 """
 
 import os

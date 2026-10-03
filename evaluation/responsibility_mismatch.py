@@ -9,7 +9,7 @@ The per-level breakdown at the end is what justifies the central design claim:
 that no legitimate CV has an E1/E2 role claiming authority over anybody, which
 is why that check needs no size threshold.
 
-Run with:  python -m scripts.evaluate_responsibility_signal
+Run with:  python -m evaluation.responsibility_mismatch
 """
 
 import os

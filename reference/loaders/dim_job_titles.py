@@ -16,7 +16,7 @@ value is produced by `transformations.standardize_job_title` at transform time,
 so the rule lives in exactly one place; the column exists in the file only so
 the standardization could be reviewed alongside the seniority.
 
-Run with:  python -m ingestion.load_dim_job_titles
+Run with:  python -m reference.loaders.dim_job_titles
 """
 
 import os

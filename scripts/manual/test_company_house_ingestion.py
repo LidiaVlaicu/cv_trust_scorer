@@ -1,4 +1,4 @@
-from api.company_house.ingestion import (
+from external.companies_house.ingestion import (
     CompanyHouseIngestion,
 )
 

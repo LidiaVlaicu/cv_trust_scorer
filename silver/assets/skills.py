@@ -186,7 +186,7 @@ def silver_skills():
     Cleaning (Unicode/whitespace) and standardization (lowercasing for the
     lookup) happen inside the transform; they are not persisted as columns.
 
-    Load `dim_skills` first with: python -m ingestion.load_dim_skills
+    Load `dim_skills` first with: python -m reference.loaders.dim_skills
     """
     return run_silver_skills(
         BigQuerySkillsWarehouse(),

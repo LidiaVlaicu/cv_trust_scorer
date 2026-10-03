@@ -15,7 +15,7 @@ cases resolve through the same lookup.
 Cities are parsed from the string rather than listed here, so a CV mentioning a
 new city needs no change to this file — only a new *country* does.
 
-Run with:  python -m ingestion.load_dim_location_aliases
+Run with:  python -m reference.loaders.dim_location_aliases
 """
 
 import os

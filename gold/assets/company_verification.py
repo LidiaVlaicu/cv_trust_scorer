@@ -6,14 +6,14 @@ import requests
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from api.company_house.ingestion import fetch_company
-from api.company_house.matching import (
+from external.companies_house.ingestion import fetch_company
+from external.companies_house.matching import (
     classify_status,
     find_best_match,
     normalize_company_name,
 )
-from api.company_house.models import CompanyVerificationResult
-from api.company_house.storage import CompanyHouseStorage
+from external.companies_house.models import CompanyVerificationResult
+from external.companies_house.storage import CompanyHouseStorage
 
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 BRONZE_DATASET = os.getenv("BQ_DATASET_BRONZE")
