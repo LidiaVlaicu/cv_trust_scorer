@@ -1,23 +1,25 @@
 from dagster import Definitions, load_assets_from_modules
 
-from .assets import (
+from gold.assets import (
+    company_verification,
+    responsibility_mismatch,
+    timeline_consistency,
+)
+from orchestration.assets import (
     extraction,
-    signal_responsibility_mismatch,
-    signal_timeline_consistency,
     silver,
     silver_skills,
     silver_work_experience,
-    verification,
 )
 
 all_assets = load_assets_from_modules([
     extraction,
-    verification,
+    company_verification,
     silver,
     silver_skills,
     silver_work_experience,
-    signal_timeline_consistency,
-    signal_responsibility_mismatch,
+    timeline_consistency,
+    responsibility_mismatch,
 ])
 
 defs = Definitions(

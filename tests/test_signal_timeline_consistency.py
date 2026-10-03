@@ -7,8 +7,11 @@ runs against an in-memory fake warehouse — no BigQuery, no Dagster.
 
 from datetime import date, datetime, timezone
 
-from orchestration.assets.signal_timeline_consistency import (
+from gold.assets.timeline_consistency import (
     SIGNAL_SCHEMA,
+    run_signal_timeline_consistency,
+)
+from gold.rules.timeline_consistency import (
     _role_spans,
     _union_months,
     build_signal_rows,
@@ -16,7 +19,6 @@ from orchestration.assets.signal_timeline_consistency import (
     max_gap_months,
     max_overlap_months,
     months_between,
-    run_signal_timeline_consistency,
     seniority_shortfall_months,
     timeline_confidence,
 )

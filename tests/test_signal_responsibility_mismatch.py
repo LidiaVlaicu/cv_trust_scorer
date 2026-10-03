@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from orchestration.assets.signal_responsibility_mismatch import (
+from gold.assets.responsibility_mismatch import run_signal_responsibility_mismatch
+from gold.rules.responsibility_mismatch import (
     BUDGET_MILLIONS_FLAG,
     TEAM_FAR_ABOVE_LEVEL,
     budget_millions,
@@ -19,7 +20,6 @@ from orchestration.assets.signal_responsibility_mismatch import (
     find_responsibility_mismatches,
     people_managed,
     responsibility_confidence,
-    run_signal_responsibility_mismatch,
 )
 
 EVALUATED_AT = datetime(2026, 10, 3, 9, 0, tzinfo=timezone.utc)
