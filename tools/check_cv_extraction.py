@@ -16,7 +16,7 @@ load_dotenv()
 
 from google.cloud import storage
 import fitz
-from bronze.llm_extraction import extract_cv_data_with_claude
+from bronze.io.llm_extraction import extract_cv_data_with_claude
 from bronze.schemas import ExtractedCV
 from pydantic import ValidationError
 

@@ -6,8 +6,7 @@ internally possible?
 
 It reports FINDINGS, not a score. There is deliberately no weighted total,
 because any set of weights ("an overlap costs 25 points") would be an opinion
-that cannot be defended. Every number in the output is either a measurement
-taken from the data or a threshold validated against labelled CVs.
+that cannot be defended.
 
 Four checks, all pure date arithmetic:
 
@@ -18,19 +17,17 @@ Four checks, all pure date arithmetic:
                                     (reference/seniority_ladder.py)
     4. multiple current roles   more than one role marked as ongoing
 
-Each finding carries an `evidence` strength measured on the 300 labelled CVs
-in bronze.raw_cv_texts (see evaluation/timeline_consistency.py):
+Each finding carries an `evidence` strength:
 
-    proven      occurred only in known-inconsistent CVs (100% precision)
-    suggestive  also occurred in legitimate CVs
+    proven      the pattern a legitimate CV should never show
+    suggestive  a legitimate CV can show it too
     data_issue  our extraction failed, not a claim by the candidate
 
 Those roll up into one `confidence` value per candidate - how much the
 timeline can be trusted: confirmed, possible, not_confirmed, not_evaluated.
 
-Two checks were tested and dropped for not discriminating at all: seniority
-regression (10% of inconsistent CVs vs 5% of legitimate) and short tenure
-(5.3% vs 5.3%). Normal careers contain both.
+Seniority regression and short tenure were tried and dropped: normal careers
+contain both.
 
 What this signal deliberately does NOT check: whether the role *descriptions*
 match the titles (a Graduate claiming to direct 25 engineers). That
@@ -45,7 +42,7 @@ from datetime import date, datetime
 
 from reference import seniority_ladder as ladder
 
-# ── Thresholds, each justified by the labelled evaluation ─────────────────
+# ── Thresholds ────────────────────────────────────────────────────────────
 
 # When one role ends and the next starts in the same month they share a single
 # transition month; month precision cannot tell a real overlap from a handover.
@@ -53,8 +50,7 @@ from reference import seniority_ladder as ladder
 OVERLAP_TOLERANCE_MONTHS = 1
 
 # Real careers contain gaps (study, parental leave, job hunting), so these are
-# defensible real-world values rather than the ones that would best separate
-# this particular dataset.
+# defensible real-world values rather than tuned ones.
 GAP_FLAG_MONTHS = 6
 LONG_GAP_FLAG_MONTHS = 12
 
@@ -72,17 +68,10 @@ MIN_EXPERIENCE_MONTHS = ladder.MIN_EXPERIENCE_MONTHS
 # Principal whose CV shows three jobs presents ~5 years against the ladder's
 # 11, through no fault of their own.
 #
-# Six years is the margin at which that bias is exhausted. Measured on the 300
-# labelled CVs, flagging a shortfall above:
-#
-#     4 years  ->  83% precision, 19% recall   (6 false positives, all Principal)
-#     5 years  ->  82% precision, 15% recall
-#     6 years  ->  92% precision, 15% recall   (2 false positives, both Principal)
-#
-# Six years keeps the recall of a lower threshold while leaving only the two
-# false positives that CV truncation fully explains. The remaining error is a
-# known, stated limitation of reading careers off CVs rather than a tuned
-# constant: no threshold can recover history the document does not contain.
+# Six years is the margin at which that bias is exhausted: it leaves only the
+# cases that CV truncation fully explains. No threshold can recover history the
+# document does not contain, so the remaining error is a stated limitation of
+# reading careers off CVs.
 #
 # A consequence worth stating: a six-year margin is larger than the ladder's
 # own minimum for Mid (2y) and Senior (4y), so in practice this check can only
@@ -92,8 +81,8 @@ MIN_EXPERIENCE_MONTHS = ladder.MIN_EXPERIENCE_MONTHS
 SENIORITY_SHORTFALL_FLAG_MONTHS = 72
 
 # How strong a single finding is as evidence against the timeline.
-PROVEN = "proven"          # occurred only in known-inconsistent CVs
-SUGGESTIVE = "suggestive"  # also occurred in legitimate CVs
+PROVEN = "proven"          # a legitimate CV should never show this
+SUGGESTIVE = "suggestive"  # a legitimate CV can show it too
 DATA_ISSUE = "data_issue"  # our extraction failed, not the candidate's claim
 
 # Our confidence in the candidate's timeline, derived from the evidence found.
@@ -102,16 +91,15 @@ POSSIBLE = "possible"            # suggestive evidence only, worth a look
 NOT_CONFIRMED = "not_confirmed"  # proven evidence of an impossible timeline
 NOT_EVALUATED = "not_evaluated"  # no role could be placed on a timeline
 
-# Measured precision of each finding on the 300 labelled CVs. Regenerate with
-# evaluation/timeline_consistency.py after changing any threshold.
+# How strong each finding is as evidence against the timeline.
 EVIDENCE = {
-    "employment_overlap_minor": SUGGESTIVE,  # 90% precision (9 of 10)
-    "employment_overlap": PROVEN,            # 100% (8 of 8)
-    "employment_overlap_severe": PROVEN,     # 100% (3 of 3)
-    "long_gap": PROVEN,                      # 100% (2 of 2)
-    "very_long_gap": PROVEN,                 # 100% (2 of 2)
-    # 92% (22 of 24). The two legitimate CVs it fires on are both Principals
-    # whose earlier career is not listed - see SENIORITY_SHORTFALL_FLAG_MONTHS.
+    "employment_overlap_minor": SUGGESTIVE,
+    "employment_overlap": PROVEN,
+    "employment_overlap_severe": PROVEN,
+    "long_gap": PROVEN,
+    "very_long_gap": PROVEN,
+    # a legitimate Principal can trip this when earlier career is not listed
+    # - see SENIORITY_SHORTFALL_FLAG_MONTHS
     "seniority_implausible": SUGGESTIVE,
     "multiple_current_roles": PROVEN,        # logically impossible
     "unevaluable_dates": DATA_ISSUE,

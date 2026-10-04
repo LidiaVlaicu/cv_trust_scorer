@@ -1,13 +1,8 @@
 """
-Pydantic schemas for CV extraction.
+The shape Claude's CV extraction must have.
 
-These models validate the JSON response from Claude when extracting structured
-information from CV text. They define a contract: if validation passes, the
-data has exactly this shape and downstream code can trust it.
-
-Used by:
-    - dagster/assets/extraction.py (validates Claude responses)
-    - tests/test_schemas.py (verifies schema behavior)
+If the response validates against these models, everything downstream can
+trust the structure.
 """
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 

@@ -10,14 +10,17 @@ from .models import CompanySearchResult, CompanyVerificationResult
 class CompanyHouseStorage:
     """Persists Company House responses and verification results into BigQuery."""
 
-    def __init__(self) -> None:
-        self.client = bigquery.Client(
+    def __init__(self, client: bigquery.Client | None = None) -> None:
+        self.client = client or bigquery.Client(
             project=os.getenv("GCP_PROJECT_ID")
         )
 
         bronze_dataset = os.getenv("BQ_DATASET_BRONZE")
         gold_dataset = os.getenv("BQ_DATASET_GOLD")
 
+        self.work_experience_table_id = (
+            f"{self.client.project}.{bronze_dataset}.raw_work_experience"
+        )
         self.search_table_id = (
             f"{self.client.project}.{bronze_dataset}."
             "companies_house_search_results"
@@ -26,6 +29,14 @@ class CompanyHouseStorage:
             f"{self.client.project}.{gold_dataset}."
             "signal_company_verification"
         )
+
+    def read_work_experience_companies(self) -> list[dict]:
+        """The employers to verify: {experience_id, submission_id, company_name}."""
+        query = f"""
+            SELECT experience_id, submission_id, company_name
+            FROM `{self.work_experience_table_id}`
+        """
+        return [dict(row) for row in self.client.query(query).result()]
 
     def insert_search_results(
         self,

@@ -64,10 +64,9 @@ cv_trust_scorer/
 ├── silver/             Clean it: standardize and validate, row for row
 ├── gold/               Judge it: the trust signals, one verdict per candidate
 ├── reference/          Human-reviewed taxonomies and the seniority ladder
-├── warehouse/          Shared BigQuery plumbing
+├── shared/             Shared BigQuery plumbing
 ├── external/           Third-party APIs (Companies House)
-├── evaluation/         Precision/recall harnesses, one per signal
-├── dataset/            How the synthetic corpus was generated
+├── dataset_generation/ How the synthetic CV set was generated
 ├── pipeline/           Dagster wiring
 ├── tools/              Run by hand: setup checks and probes
 ├── tests/              Mirrors the tree above
@@ -83,6 +82,7 @@ test that enforces the pure/I-O split rather than leaving it to convention.
 - [STRUCTURE.md](docs/STRUCTURE.md): the layout, and the architectural rule the tests enforce.
 - [SETUP.md](docs/SETUP.md): step-by-step setup instructions.
 - [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md): rationale for significant choices.
+- [BUSINESS_RULES.md](docs/BUSINESS_RULES.md): every rule the pipeline applies, and which layer owns it.
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): solutions to known issues.
 - [tools/README.md](tools/README.md): the by-hand utilities, and why they are not tests.
 

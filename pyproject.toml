@@ -27,6 +27,8 @@ dependencies = [
   "pydantic-ai",
   "google-cloud-storage",
   "google-cloud-bigquery",
+  "reportlab",      # dataset_generation/text_to_pdf.py renders the synthetic CVs
+  "phonenumbers",   # silver/logic phone normalization to E.164
 ]
 
 [project.optional-dependencies]
@@ -51,4 +53,4 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
-include = ["bronze*", "silver*", "gold*", "reference*", "warehouse*", "external*", "evaluation*", "dataset*", "pipeline*", "app*"]
+include = ["bronze*", "silver*", "gold*", "reference*", "shared*", "external*", "dataset_generation*", "pipeline*", "tools*", "app*"]

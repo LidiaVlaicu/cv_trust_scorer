@@ -28,34 +28,26 @@ Three checks, all on text the candidate wrote:
                                            legitimate E5 was observed to claim
 
 As in the timeline signal there is deliberately no score. Each finding carries
-an `evidence` strength measured on the 300 labelled CVs in bronze.raw_cv_texts,
-and those roll up into one `confidence` per candidate.
+an `evidence` strength, and those roll up into one `confidence` per candidate.
 
 Why check 1 has no size threshold
 ---------------------------------
-Of 232 E1/E2 role descriptions in the labelled set, NOT ONE legitimate CV
-claims the candidate managed anybody. All 12 such claims come from CVs labelled
-inconsistent. The rule therefore needs no tuned cut-off: at these levels the
-ladder says design decisions are not yet owned, and the data contains no honest
-counter-example. The smallest claim observed is 18 people, so the data cannot
-by itself distinguish "any team" from "a team of 18 or more"; "any" is chosen
-because it follows the ladder's definition rather than this dataset's minimum.
+At E1/E2 the ladder says design decisions are not yet owned, so owning a team
+of any size contradicts the title. "Any" follows the ladder's definition rather
+than a tuned cut-off.
 
 Mentoring is deliberately not management
 ----------------------------------------
 "Mentored three juniors" is normal from E3 and is not treated as a scope claim.
 Only owning a team, holding direct reports, or managing a counted group of
-people counts. No E1/E2 row in the labelled set claims mentoring without also
-claiming a team, so this costs no detections; it is a guard against a false
-positive this dataset happens not to contain.
+people counts.
 
 What this signal deliberately does NOT do
 -----------------------------------------
-It does not infer a seniority level for the 308 role rows that state none. That
-was tested: inferring "junior" from prior experience on the CV is only 74%
-accurate, because a CV lists a few recent jobs and an honest Senior's first
-listed role shows no prior months. Applying these rules to inferred levels
-collapsed precision from 100% to 14%. Rows with no stated level are left out.
+It does not infer a seniority level for the role rows that state none. A CV
+lists only a few recent jobs, so an honest Senior's first listed role shows no
+prior months and would be read as junior. Rows with no stated level are left
+out.
 
 This module is the pure core: the extraction patterns and the rules, with
 no warehouse and no Dagster. The I/O shell lives in
@@ -71,20 +63,14 @@ from reference import seniority_ladder as ladder
 
 # Check 1 has no size threshold at all; see the module docstring.
 
-# A budget is an E5+ responsibility. One million is a conservative floor: it is
-# large enough that no description mentions it incidentally. Only two E1/E2
-# rows in the labelled set claim a budget (both from inconsistent CVs), so this
-# figure rests on the ladder's definition of scope, not on measurement.
+# A budget is an E5+ responsibility. One million is a conservative floor: large
+# enough that no description mentions it incidentally. The figure rests on the
+# ladder's definition of scope.
 BUDGET_MILLIONS_FLAG = 1.0
 
-# Check 3: across all 150 legitimate CVs the largest team an E3/E4 role claims
-# is 25 people, and at E5/E6 - the bands that are supposed to lead teams - it
-# is only 8. Thirty therefore sits above the whole observed legitimate range,
-# not merely above the band's own ceiling.
-#
-# Honest limits of this number: it is the one threshold here read off our own
-# dataset rather than from the ladder, and only two roles exceed it. It is a
-# conservative floor, not a calibrated boundary.
+# Check 3: a team of thirty is beyond what an E3/E4 role leads under the
+# ladder. This is the one threshold here not taken from the ladder itself, so
+# treat it as a conservative floor rather than a calibrated boundary.
 TEAM_FAR_ABOVE_LEVEL = 30
 BANDS_BELOW_TEAM_OWNERSHIP = frozenset({"E3", "E4"})
 
@@ -96,14 +82,10 @@ POSSIBLE = "possible"
 NOT_CONFIRMED = "not_confirmed"
 NOT_EVALUATED = "not_evaluated"
 
-# Measured on the 300 labelled CVs. Regenerate with
-# evaluation/responsibility_mismatch.py after changing any threshold.
+# How strong each finding is as evidence against the stated level.
 EVIDENCE = {
-    # 12 of 12, against 0 of 232 legitimate E1/E2 descriptions
     "team_ownership_at_junior_level": PROVEN,
-    # 2 of 2 - correct on this data, but too few rows to call proven
     "budget_ownership_at_junior_level": SUGGESTIVE,
-    # 2 of 2 - likewise thin
     "team_far_above_level": SUGGESTIVE,
 }
 

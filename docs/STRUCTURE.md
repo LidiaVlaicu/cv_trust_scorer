@@ -7,8 +7,12 @@ The project is organised on two axes:
 
 So a path tells you both what stage of the pipeline you are in and whether the
 code touches the outside world. `silver/rules/work_experience.py` is pure date
-and string logic; `silver/assets/work_experience.py` is the BigQuery adapter
-and the Dagster asset that feeds it.
+and string logic; `silver/assets/silver_work_experience.py` is the BigQuery
+adapter and the Dagster asset that feeds it.
+
+Bronze adds a third folder, `bronze/io/`, because it is the only layer that
+talks to three outside systems — GCS, BigQuery and Claude. Silver and gold
+reach BigQuery through the `shared/` package instead.
 
 ## The layers
 
@@ -25,37 +29,47 @@ candidate's whole history and emits a judgment, it is gold.
 
 ```
 bronze/                     LAND IT. Store what arrived; interpret nothing.
-  rules/parsing.py            pure classifiers over CV text
+  rules/cv_analysis.py        pure classifiers over CV text
   schemas.py                  the ExtractedCV validation contract
-  llm_extraction.py           the Claude call (I/O, so outside rules/)
-  storage.py                  GCS: read the PDFs, archive the raw JSON
-  warehouse.py                BigQuery, including change detection
-  assets/cv_text.py           GCS PDFs -> raw_cv_texts
-  assets/entities.py          raw_cv_texts -> the three entity tables
-  assets/quality.py           bronze data-quality checks
+  io/gcs_storage.py           GCS: read the PDFs, archive the raw JSON
+  io/bigquery_persistence.py  BigQuery, including change detection
+  io/llm_extraction.py        the Claude call
+  assets/extract_cv_text.py   GCS PDFs -> raw_cv_texts
+  assets/extract_entities.py  raw_cv_texts -> the three entity tables
+  assets/check_assets.py      bronze data-quality checks (Dagster asset checks)
 
 silver/                     CLEAN IT. Standardize and validate.
-  rules/candidates.py         name, phone (E.164), email
-  rules/skills.py             taxonomy matching
-  rules/work_experience.py    titles, CV months, locations
-  assets/*.py                 one adapter + Dagster asset per entity
+  rules/candidates.py                 name, phone (E.164), email
+  rules/skills.py                     taxonomy matching
+  rules/work_experience.py            titles, CV months, locations
+  assets/silver_candidates.py         one adapter + Dagster asset per entity
+  assets/silver_skills.py
+  assets/silver_work_experience.py
 
 gold/                       JUDGE IT. Trust signals.
-  rules/timeline_consistency.py        thresholds and date arithmetic
-  rules/responsibility_mismatch.py     extraction patterns and the rules
-  assets/*.py                          adapters + Dagster assets
-  assets/company_verification.py       Companies House check
+  rules/timeline_consistency.py            thresholds and date arithmetic
+  rules/responsibility_mismatch.py         extraction patterns and the rules
+  assets/signal_timeline_consistency.py    adapters + Dagster assets
+  assets/signal_responsibility_mismatch.py
+  assets/signal_company_verification.py    Companies House check
 
 reference/                  Human-reviewed inputs; the dim_ tables.
-  seniority_ladder.py         the published engineering ladder, cited
-  reviewed/                   the CSVs a person edits
-  parsing/                    pure parsers, with validation
-  loaders/                    thin I/O shells, one per dim_ table
+  seniority_ladder.py                   the published engineering ladder, cited
+  reviewed/                             the 3 CSVs a person edits
+  parsing/common/reference_csv.py       read a CSV into checked rows
+  parsing/dim_job_titles.py             job_title -> seniority_level
+  parsing/dim_location_aliases.py       location_token -> country
+  parsing/dim_skills.py                 alias -> canonical_skill (one row, many)
+  loaders/load_dim_job_titles.py        rows -> BigQuery, full refresh
+  loaders/load_dim_location_aliases.py
+  loaders/load_dim_skills.py
 
-warehouse/                  Shared BigQuery plumbing (client, dataset, load)
+shared/                     BigQuery plumbing for silver, gold and reference
+  bigquery_client.py          bigquery_client, dataset_name
+  bigquery_tables.py          table_id, replace_table
+
 external/companies_house/   Third-party API client
-evaluation/                 Precision/recall harnesses, one per signal
-dataset/                    How the thesis corpus was made
+dataset_generation/         How the dataset was made
 pipeline/definitions.py     Dagster wiring, and nothing else
 tools/                      Run by hand: setup checks and probes (see its README)
 tests/                      Mirrors the tree above
@@ -64,7 +78,7 @@ tests/                      Mirrors the tree above
 ## The rule that is actually enforced
 
 `tests/test_architecture.py` reads the import statements of every module under
-a `rules/` folder and fails if one imports the warehouse, Dagster, an API
+a `rules/` folder and fails if one imports BigQuery, Dagster, an API
 client, or even `os`:
 
 ```
@@ -82,28 +96,26 @@ It also enforces direction: `assets/` imports `rules/`, never the reverse.
 
 ```bash
 # reference data first — the silver assets read the dim_ tables
-python -m reference.loaders.dim_skills
-python -m reference.loaders.dim_job_titles
-python -m reference.loaders.dim_location_aliases
+python -m reference.loaders.load_dim_skills
+python -m reference.loaders.load_dim_job_titles
+python -m reference.loaders.load_dim_location_aliases
 
 # the pipeline
 DAGSTER_HOME="$(pwd)/dagster_home" dagster asset materialize \
   -m pipeline.definitions --select silver_candidates,silver_skills,...
-
-# how well each signal performs against the folder ground truth
-python -m evaluation.timeline_consistency
-python -m evaluation.responsibility_mismatch
 
 pytest
 ```
 
 ## Known inconsistencies
 
-Two things are deliberately left as they are, so that a restructure stayed a
-restructure:
+One thing is deliberately left as it is:
 
-- `gold/assets/company_verification.py` reads bronze directly rather than
-  silver, unlike the other two signals, and has no `rules/` half.
-- `silver/assets/candidates.py` predates the warehouse-Protocol pattern the
-  other assets use, so it has no injectable adapter and is not covered by
-  fake-warehouse tests.
+- `gold/assets/signal_company_verification.py` reads bronze directly rather than
+  silver, unlike the other two signals, and has no `rules/` half — its pure
+  logic lives in `external/companies_house/matching.py` instead.
+
+Every asset now follows the same shape: a pure core, a protocol naming the
+reads and writes, the real adapter, and a `run_*()` whose dependencies are
+injected. So each one is covered by a fake-store test that needs no GCS, no
+BigQuery and no API calls.

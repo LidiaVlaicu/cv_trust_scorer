@@ -19,7 +19,8 @@ from datetime import date, datetime
 
 _NON_WORD_PATTERN = re.compile(r"[^\w\s]|_")
 
-# CVs state a month and a year, never a day.
+# CVs state a month and a year, never a day. Every distinct date string in the
+# CV set parses as one of these two; "Present" is the only non-date value.
 _MONTH_FORMATS = ("%B %Y", "%b %Y")  # "August 2017" / "Aug 2017"
 
 # Values that mean "still working here" rather than a date. Only "Present"
