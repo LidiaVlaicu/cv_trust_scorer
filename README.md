@@ -50,39 +50,41 @@ Then follow [docs/SETUP.md](docs/SETUP.md) for authentication and GCP setup.
 Verify the setup:
 
 ```bash
-python scripts/test_auth.py
+python tools/check_gcp_auth.py
 ```
 
 ## Project structure
 
+The top level is the medallion layer; inside each layer `rules/` is pure
+logic and `assets/` does the I/O.
+
 ```
-cv-trust_scorer/
-├── api/                # FastAPI service (planned)
-├── app/                # Streamlit UI (planned)
-├── dagster/            # Dagster pipeline definitions
-├── data/               # Synthetic CVs (legitimate and inconsistent)
-├── dbt/                # dbt transformations
-├── docs/               # Project documentation
-├── ingestion/          # Ingestion scripts
-├── scripts/            # Utility scripts (setup, verification)
-├── tests/              # Python tests
-├── .env.example        # Template for environment variables
-├── .gitignore
-├── README.md
-└── requirements.txt
+cv_trust_scorer/
+├── bronze/             Land it: PDFs and LLM extraction -> raw_* tables
+├── silver/             Clean it: standardize and validate, row for row
+├── gold/               Judge it: the trust signals, one verdict per candidate
+├── reference/          Human-reviewed taxonomies and the seniority ladder
+├── shared/             Shared BigQuery plumbing
+├── external/           Third-party APIs (Companies House)
+├── dataset_generation/ How the synthetic CV set was generated
+├── pipeline/           Dagster wiring
+├── tools/              Run by hand: setup checks and probes
+├── tests/              Mirrors the tree above
+├── docs/               Project documentation
+└── data/               Ground truth labels
 ```
+
+See [docs/STRUCTURE.md](docs/STRUCTURE.md) for what belongs where, and for the
+test that enforces the pure/I-O split rather than leaving it to convention.
 
 ## Documentation
 
+- [STRUCTURE.md](docs/STRUCTURE.md): the layout, and the architectural rule the tests enforce.
 - [SETUP.md](docs/SETUP.md): step-by-step setup instructions.
 - [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md): rationale for significant choices.
+- [BUSINESS_RULES.md](docs/BUSINESS_RULES.md): every rule the pipeline applies, and which layer owns it.
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): solutions to known issues.
-- [SCALING.md](docs/SCALING.md): how the architecture would change at production scale (planned).
-- [LIMITATIONS.md](docs/LIMITATIONS.md): known gaps and tradeoffs (planned).
-
-## Status and roadmap
-
-See [docs/ROADMAP.md](docs/ROADMAP.md) for the week-by-week build plan.
+- [tools/README.md](tools/README.md): the by-hand utilities, and why they are not tests.
 
 ## License
 

@@ -278,6 +278,71 @@ The initial keyword list lacked BI/analytics vocabulary (power bi, tableau, dax,
 
 ---
 
+## 8.Gold output: findings with evidence, not a trust score
+
+### Decision
+
+Each gold signal writes a list of FINDINGS per candidate, plus one
+`confidence` value. There is no weighted score and no percentage.
+
+A finding names what was detected, how large it is, and how strong that kind of
+finding is as evidence (`proven`, `suggestive`, `data_issue`). Those roll up
+into one confidence per candidate by a single stated rule:
+
+| Strongest evidence found | confidence |
+|---|---|
+| any `proven` | `not_confirmed` |
+| only `suggestive` | `possible` |
+| nothing | `confirmed` |
+| nothing could be placed on a timeline | `not_evaluated` |
+
+### Reasoning
+
+A weighted score cannot be defended. "An employment overlap costs 25 points"
+is an opinion, and once several such opinions are summed, the output is a
+number nobody can trace back to a cause. A recruiter told a CV scores 0.42
+learns nothing about what to ask the candidate.
+
+Findings are traceable in both directions: every one names the role it came
+from, so the claim can be read back from the CV, and the confidence value can
+always be explained by pointing at the finding that produced it.
+
+The vocabulary is also deliberately cautious. The system says `not_confirmed`,
+never "lying" or "fraudulent": it detects that a document contradicts itself,
+which is not the same as intent. A CV can contradict itself through a typo, a
+forgotten end date, or a role the candidate chose not to list.
+
+### Alternatives considered
+
+**A weighted trust score (0-100)**: the obvious shape, and what the project
+originally planned. Rejected because the weights would be arbitrary, and
+because summing dissimilar findings destroys the information that makes a
+finding actionable.
+
+**A binary flag (trustworthy / not)**: hides the distinction between a CV with
+a logically impossible timeline and one with an unexplained gap. Both would be
+flagged identically, and the second has innocent explanations.
+
+**Findings with no confidence rollup**: honest, but unusable — a reviewer
+facing 300 CVs needs an ordering. The rollup gives one, by a rule simple
+enough to state in a sentence.
+
+### Implementation
+
+`gold/rules/timeline_consistency.py` and
+`gold/rules/responsibility_mismatch.py` hold the `EVIDENCE` map that labels
+each finding, and the rollup rule. Both are pure: the thresholds and labels
+are data in the module, not logic spread through the asset.
+
+### Known limitation
+
+The `proven` / `suggestive` labels were assigned by measuring each finding
+against the labelled CV set. That measurement is not currently reproducible in
+the repo — the evaluation harnesses are in git history only. Any threshold
+change therefore invalidates a label until the evaluation is restored.
+
+---
+
 ## Future decisions to document here
 
 - ~~LLM extraction approach~~ — see "LLM extraction: Pydantic models as the trust boundary" above.

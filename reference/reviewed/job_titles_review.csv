@@ -1,0 +1,182 @@
+job_title,job_title_standardized,seniority_level,row_count,notes
+Analytics Manager,Analytics Manager,Manager,1,
+BI Analyst,BI Analyst,,16,no seniority word in the title
+BI Analyst Intern,BI Analyst Intern,Intern,1,
+BI Developer,BI Developer,,3,no seniority word in the title
+BI Development Intern,BI Development Intern,Intern,1,
+BI Intern,BI Intern,Intern,1,
+BI Reporting Specialist,BI Reporting Specialist,,1,no seniority word in the title
+BI Support Analyst,BI Support Analyst,,1,no seniority word in the title
+Backend Developer,Backend Developer,,3,no seniority word in the title
+Backend Developer Intern,Backend Developer Intern,Intern,1,
+Backend Engineer,Backend Engineer,,24,no seniority word in the title
+Backend Software Engineer,Backend Software Engineer,,2,no seniority word in the title
+Business Analyst,Business Analyst,,1,no seniority word in the title
+Business Analyst Intern,Business Analyst Intern,Intern,1,
+Business Intelligence Analyst,Business Intelligence Analyst,,2,no seniority word in the title
+Business Intelligence Consultant,Business Intelligence Consultant,,1,no seniority word in the title
+Cloud Infrastructure Specialist,Cloud Infrastructure Specialist,,1,no seniority word in the title
+Cloud Support Specialist,Cloud Support Specialist,,1,no seniority word in the title
+Data Analyst,Data Analyst,,29,no seniority word in the title
+Data Analyst (Contract),Data Analyst Contract,,1,"contract type, no seniority stated"
+Data Analyst (Placement Year),Data Analyst Placement Year,Intern,1,university placement year = student placement
+Data Analyst Intern,Data Analyst Intern,Intern,11,
+Data Analytics Assistant,Data Analytics Assistant,,1,no seniority word in the title
+Data Analytics Manager,Data Analytics Manager,Manager,1,
+Data Analytics Specialist,Data Analytics Specialist,,1,no seniority word in the title
+Data Engineer,Data Engineer,,20,no seniority word in the title
+Data Engineering Intern,Data Engineering Intern,Intern,1,
+Data Entry and Analysis Assistant,Data Entry and Analysis Assistant,,1,no seniority word in the title
+Data Operations Intern,Data Operations Intern,Intern,1,
+Data Science Intern,Data Science Intern,Intern,6,
+Data Scientist,Data Scientist,,24,no seniority word in the title
+Data Scientist Intern,Data Scientist Intern,Intern,1,
+Data Support Analyst,Data Support Analyst,,4,no seniority word in the title
+Data Support Specialist,Data Support Specialist,,1,no seniority word in the title
+DevOps Engineer,DevOps Engineer,,35,no seniority word in the title
+DevOps Specialist,DevOps Specialist,,1,no seniority word in the title
+DevOps Technician,DevOps Technician,,1,no seniority word in the title
+Engineering Manager,Engineering Manager,Manager,1,
+Frontend Developer,Frontend Developer,,6,no seniority word in the title
+Frontend Developer (Contract),Frontend Developer Contract,,2,"contract type, no seniority stated"
+Frontend Developer Intern,Frontend Developer Intern,Intern,3,
+Frontend Engineer,Frontend Engineer,,11,no seniority word in the title
+Frontend Engineer (Senior),Frontend Engineer Senior,Senior,1,
+Full Stack Developer,Full Stack Developer,,16,no seniority word in the title
+Full Stack Developer Intern,Full Stack Developer Intern,Intern,2,
+Full Stack Engineer,Full Stack Engineer,,10,no seniority word in the title
+Graduate Data Analyst,Graduate Data Analyst,Graduate,1,
+Graduate Data Scientist,Graduate Data Scientist,Graduate,1,
+Graduate Developer,Graduate Developer,Graduate,1,
+Graduate Machine Learning Developer,Graduate Machine Learning Developer,Graduate,1,
+Graduate Research Assistant,Graduate Research Assistant,Graduate,1,
+Graduate Software Developer,Graduate Software Developer,Graduate,4,
+Graduate Software Engineer,Graduate Software Engineer,Graduate,5,
+Infrastructure Associate,Infrastructure Associate,,1,'Associate' sometimes implies junior - left blank rather than guessing
+Infrastructure Engineer,Infrastructure Engineer,,4,no seniority word in the title
+Intermediate Research Engineer,Intermediate Research Engineer,Mid,1,'Intermediate' = mid level
+Internship Research Technician,Internship Research Technician,Intern,1,
+Junior BI Analyst,Junior BI Analyst,Junior,9,
+Junior BI Developer,Junior BI Developer,Junior,2,
+Junior Backend Developer,Junior Backend Developer,Junior,10,
+Junior Backend Engineer,Junior Backend Engineer,Junior,6,
+Junior Business Intelligence Analyst,Junior Business Intelligence Analyst,Junior,1,
+Junior Cloud Operations Technician,Junior Cloud Operations Technician,Junior,1,
+Junior Data Analyst,Junior Data Analyst,Junior,20,
+Junior Data Engineer,Junior Data Engineer,Junior,13,
+Junior Data Scientist,Junior Data Scientist,Junior,9,
+Junior DevOps Apprentice,Junior DevOps Apprentice,Apprentice,1,apprenticeship sits below Junior
+Junior DevOps Engineer,Junior DevOps Engineer,Junior,12,
+Junior Developer,Junior Developer,Junior,3,
+Junior Developer Intern,Junior Developer Intern,Intern,1,carries both Junior and Intern - the actual position is the internship
+Junior ETL Engineer,Junior ETL Engineer,Junior,1,
+Junior Frontend Developer,Junior Frontend Developer,Junior,11,
+Junior Frontend Engineer,Junior Frontend Engineer,Junior,5,
+Junior Full Stack Developer,Junior Full Stack Developer,Junior,17,
+Junior Full Stack Engineer,Junior Full Stack Engineer,Junior,3,
+Junior Infrastructure Technician,Junior Infrastructure Technician,Junior,1,
+Junior ML Engineer,Junior ML Engineer,Junior,2,
+Junior Machine Learning Developer,Junior Machine Learning Developer,Junior,2,
+Junior Machine Learning Engineer,Junior Machine Learning Engineer,Junior,9,
+Junior Research Analyst,Junior Research Analyst,Junior,1,
+Junior Research Associate,Junior Research Associate,Junior,1,
+Junior Research Engineer,Junior Research Engineer,Junior,3,
+Junior Research Engineer - Data Science Division,Junior Research Engineer Data Science Division,Junior,1,
+Junior Software Developer,Junior Software Developer,Junior,3,
+Junior Software Engineer,Junior Software Engineer,Junior,10,
+Junior Systems Administrator,Junior Systems Administrator,Junior,5,
+Junior Systems Engineer,Junior Systems Engineer,Junior,3,
+Junior Web Developer,Junior Web Developer,Junior,5,
+Junior to Mid-Level Frontend Engineer,Junior to Mid Level Frontend Engineer,Junior,2,title spans two levels; taking the floor - change to Mid if you prefer
+Lead Infrastructure Engineer,Lead Infrastructure Engineer,Lead,1,
+Lead Software Engineer,Lead Software Engineer,Lead,2,
+Machine Learning Engineer,Machine Learning Engineer,,29,no seniority word in the title
+Machine Learning Intern,Machine Learning Intern,Intern,1,
+Machine Learning Scientist,Machine Learning Scientist,,1,no seniority word in the title
+Mid-Level Backend Engineer,Mid Level Backend Engineer,Mid,1,
+Mid-Level Data Analyst,Mid Level Data Analyst,Mid,1,
+Mid-Level Frontend Developer,Mid Level Frontend Developer,Mid,1,
+Mid-Level Frontend Engineer,Mid Level Frontend Engineer,Mid,1,
+Operations Support Engineer,Operations Support Engineer,,1,no seniority word in the title
+Principal Cloud Architect,Principal Cloud Architect,Principal,1,
+Principal Data Architect,Principal Data Architect,Principal,1,
+Principal Data Engineer,Principal Data Engineer,Principal,1,
+Principal Data Science Director,Principal Data Science Director,Director,1,carries both Principal and Director - Director is the higher claim
+Principal Data Scientist,Principal Data Scientist,Principal,3,
+Principal Engineer,Principal Engineer,Principal,25,
+Principal Frontend Architect,Principal Frontend Architect,Principal,1,
+Principal ML Research Scientist,Principal ML Research Scientist,Principal,1,
+Principal Research Engineer,Principal Research Engineer,Principal,2,
+Principal Research Scientist,Principal Research Scientist,Principal,1,
+Research Engineer,Research Engineer,,15,no seniority word in the title
+Research Engineer - Advanced Systems Lab,Research Engineer Advanced Systems Lab,,1,no seniority word in the title
+Research Engineer - Staff Level,Research Engineer Staff Level,Staff,1,
+Research Engineer II,Research Engineer II,Mid,3,roman numeral II normally denotes mid level
+"Research Engineer, Staff",Research Engineer Staff,Staff,1,
+Senior BI Analyst,Senior BI Analyst,Senior,9,
+Senior BI Developer,Senior BI Developer,Senior,2,
+Senior Backend Developer,Senior Backend Developer,Senior,3,
+Senior Backend Engineer,Senior Backend Engineer,Senior,25,
+Senior Backend Engineer - Platform Engineering,Senior Backend Engineer Platform Engineering,Senior,1,
+Senior Backend Engineer - Platform Team,Senior Backend Engineer Platform Team,Senior,1,
+"Senior Backend Engineer, Platform Team",Senior Backend Engineer Platform Team,Senior,1,
+Senior Business Analyst,Senior Business Analyst,Senior,1,
+Senior Data Analyst,Senior Data Analyst,Senior,18,
+Senior Data Engineer,Senior Data Engineer,Senior,15,
+Senior Data Pipeline Developer,Senior Data Pipeline Developer,Senior,1,
+Senior Data Scientist,Senior Data Scientist,Senior,12,
+Senior Data Strategy Director,Senior Data Strategy Director,Director,1,
+Senior DevOps Architect,Senior DevOps Architect,Senior,1,
+Senior DevOps Engineer,Senior DevOps Engineer,Senior,16,
+Senior Developer,Senior Developer,Senior,1,
+Senior Engineer,Senior Engineer,Senior,4,
+Senior Frontend Architect,Senior Frontend Architect,Senior,1,
+Senior Frontend Developer,Senior Frontend Developer,Senior,2,
+Senior Frontend Engineer,Senior Frontend Engineer,Senior,12,
+Senior Full Stack Developer,Senior Full Stack Developer,Senior,5,
+Senior Full Stack Engineer,Senior Full Stack Engineer,Senior,15,
+Senior Infrastructure Engineer,Senior Infrastructure Engineer,Senior,1,
+Senior Infrastructure Technician,Senior Infrastructure Technician,Senior,3,
+Senior ML Developer,Senior ML Developer,Senior,1,
+Senior ML Engineer,Senior ML Engineer,Senior,2,
+Senior ML Infrastructure Engineer,Senior ML Infrastructure Engineer,Senior,1,
+Senior Machine Learning Engineer,Senior Machine Learning Engineer,Senior,18,
+Senior Principal Engineer,Senior Principal Engineer,Principal,3,'Senior Principal' is above Principal at some companies
+Senior Research Engineer,Senior Research Engineer,Senior,8,
+Senior Software Architect,Senior Software Architect,Senior,3,
+Senior Software Engineer,Senior Software Engineer,Senior,35,
+Senior Software Engineer - Backend Systems,Senior Software Engineer Backend Systems,Senior,1,
+Senior Software Engineer - Cloud Infrastructure Team,Senior Software Engineer Cloud Infrastructure Team,Senior,1,
+"Senior Software Engineer, Backend Services",Senior Software Engineer Backend Services,Senior,1,
+Senior Staff Engineer,Senior Staff Engineer,Staff,4,'Senior Staff' is a level above Staff at some companies - split it out if you want that
+Senior Systems Architect,Senior Systems Architect,Senior,2,
+Senior Systems Engineer,Senior Systems Engineer,Senior,2,
+Software Developer,Software Developer,,2,no seniority word in the title
+Software Developer (Contract),Software Developer Contract,,1,"contract type, no seniority stated"
+Software Developer Intern,Software Developer Intern,Intern,2,
+Software Development Intern,Software Development Intern,Intern,2,
+Software Engineer,Software Engineer,,28,no seniority word in the title
+Software Engineer (Junior),Software Engineer Junior,Junior,1,
+Software Engineer - Backend Development,Software Engineer Backend Development,,1,no seniority word in the title
+Software Engineer II,Software Engineer II,Mid,1,roman numeral II normally denotes mid level
+Software Engineer Intern,Software Engineer Intern,Intern,1,
+Staff BI Analyst,Staff BI Analyst,Staff,2,
+Staff Backend Engineer,Staff Backend Engineer,Staff,7,
+Staff Data Analyst,Staff Data Analyst,Staff,3,
+Staff Data Engineer,Staff Data Engineer,Staff,3,
+Staff Data Scientist,Staff Data Scientist,Staff,1,
+Staff DevOps Engineer,Staff DevOps Engineer,Staff,3,
+Staff Engineer,Staff Engineer,Staff,29,
+Staff Engineer - Backend Infrastructure,Staff Engineer Backend Infrastructure,Staff,1,
+Staff Engineer - Cloud Infrastructure,Staff Engineer Cloud Infrastructure,Staff,1,
+Staff Engineer - Platform Infrastructure,Staff Engineer Platform Infrastructure,Staff,1,
+"Staff Engineer, Backend Infrastructure",Staff Engineer Backend Infrastructure,Staff,2,
+Staff Frontend Engineer,Staff Frontend Engineer,Staff,8,
+Staff Full Stack Engineer,Staff Full Stack Engineer,Staff,1,
+Staff Machine Learning Engineer,Staff Machine Learning Engineer,Staff,5,
+Staff Research Engineer,Staff Research Engineer,Staff,1,
+Staff Software Engineer,Staff Software Engineer,Staff,2,
+System Administrator,System Administrator,,1,no seniority word in the title
+Systems Administrator,Systems Administrator,,3,no seniority word in the title
+Web Developer Intern,Web Developer Intern,Intern,4,
+Web Development Intern,Web Development Intern,Intern,2,

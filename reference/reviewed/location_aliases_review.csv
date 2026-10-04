@@ -1,0 +1,16 @@
+location_token,country,row_count,notes
+United Kingdom,United Kingdom,416,
+Spain,Spain,100,
+Netherlands,Netherlands,65,
+France,France,54,
+Portugal,Portugal,53,
+Germany,Germany,50,
+Sweden,Sweden,50,
+Denmark,Denmark,34,
+Ireland,Ireland,32,the Republic - distinct from Northern Ireland above
+Switzerland,Switzerland,27,
+UK,United Kingdom,7,abbreviation
+Scotland,United Kingdom,3,nation within the UK
+Stockholm,Sweden,2,city with no country in the source - Stockholm is Swedish
+Northern Ireland,United Kingdom,1,nation within the UK
+Västerås,Sweden,1,city with no country in the source - Västerås is Swedish
