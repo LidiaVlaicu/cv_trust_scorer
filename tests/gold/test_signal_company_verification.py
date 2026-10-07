@@ -1,17 +1,49 @@
 """
-End-to-end test of the company verification pipeline against an in-memory
-fake store — no BigQuery, no Companies House calls, no credentials.
+The company verification verdict, and an end-to-end test of the pipeline
+against an in-memory fake store — no BigQuery, no Companies House calls, no
+credentials.
 """
 
 from datetime import datetime, timezone
 
+import pytest
 import requests
 
-from external.companies_house.matching import normalize_company_name
+from external.companies_house.name_matching import normalize_company_name
 from external.companies_house.models import CompanySearchResult
 from gold.assets.signal_company_verification import run_verify_companies
+from gold.rules.company_verification import (
+    LOW_CONFIDENCE_THRESHOLD,
+    VERIFIED_THRESHOLD,
+    classify_status,
+)
 
 FIXED_TIME = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+
+# ── the verdict ───────────────────────────────────────────────────────────
+@pytest.mark.parametrize(
+    "score, expected",
+    [
+        (100, "verified"),
+        (VERIFIED_THRESHOLD, "verified"),
+        (VERIFIED_THRESHOLD - 1, "low_confidence"),
+        (LOW_CONFIDENCE_THRESHOLD, "low_confidence"),
+        (LOW_CONFIDENCE_THRESHOLD - 1, "not_found"),
+        (0, "not_found"),
+    ],
+)
+def test_a_score_maps_to_a_status(score, expected):
+    assert classify_status(True, score) == expected
+
+
+def test_no_candidate_is_not_found_whatever_the_score():
+    assert classify_status(False, 100) == "not_found"
+
+
+def test_a_name_too_different_is_not_found_rather_than_a_weak_match():
+    """Below the low-confidence floor the name is not evidence either way."""
+    assert classify_status(True, LOW_CONFIDENCE_THRESHOLD - 1) == "not_found"
 
 
 class FakeStore:

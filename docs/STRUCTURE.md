@@ -49,6 +49,7 @@ silver/                     CLEAN IT. Standardize and validate.
 gold/                       JUDGE IT. Trust signals.
   rules/timeline_consistency.py            thresholds and date arithmetic
   rules/responsibility_mismatch.py         extraction patterns and the rules
+  rules/company_verification.py            the verify / not_found verdict
   assets/signal_timeline_consistency.py    adapters + Dagster assets
   assets/signal_responsibility_mismatch.py
   assets/signal_company_verification.py    Companies House check
@@ -109,13 +110,12 @@ pytest
 
 ## Known inconsistencies
 
-One thing is deliberately left as it is:
+None outstanding. Company verification keeps its name matching in
+`external/companies_house/name_matching.py`, next to the API client whose response
+shape it reads; the verdict and its thresholds are in
+`gold/rules/company_verification.py` with every other gold threshold.
 
-- `gold/assets/signal_company_verification.py` reads bronze directly rather than
-  silver, unlike the other two signals, and has no `rules/` half — its pure
-  logic lives in `external/companies_house/matching.py` instead.
-
-Every asset now follows the same shape: a pure core, a protocol naming the
-reads and writes, the real adapter, and a `run_*()` whose dependencies are
-injected. So each one is covered by a fake-store test that needs no GCS, no
-BigQuery and no API calls.
+All three gold signals read silver. Every asset follows the same shape: a pure
+core, a protocol naming the reads and writes, the real adapter, and a `run_*()`
+whose dependencies are injected. So each one is covered by a fake-store test
+that needs no GCS, no BigQuery and no API calls.

@@ -1,5 +1,5 @@
 """
-bronze.raw_work_experience -> gold.signal_company_verification
+silver.silver_work_experience -> gold.signal_company_verification
 
 Structure: a thin I/O shell around the pure matching rules.
 
@@ -9,7 +9,8 @@ Structure: a thin I/O shell around the pure matching rules.
 
 The store, the Companies House search and the sleep are injected, so the
 run function works against an in-memory fake with no BigQuery and no API
-calls. Every matching rule lives in external/companies_house/matching.py.
+calls. The verdict lives in gold/rules/company_verification.py, the name
+matching in external/companies_house/name_matching.py.
 """
 
 import time
@@ -20,8 +21,7 @@ import requests
 from dagster import asset, get_dagster_logger
 
 from external.companies_house.ingestion import fetch_company
-from external.companies_house.matching import (
-    classify_status,
+from external.companies_house.name_matching import (
     find_best_match,
     normalize_company_name,
 )
@@ -30,6 +30,7 @@ from external.companies_house.models import (
     CompanyVerificationResult,
 )
 from external.companies_house.storage import CompanyHouseStorage
+from gold.rules.company_verification import classify_status
 
 LIVE_API_SLEEP_SECONDS = 0.5
 
@@ -39,7 +40,7 @@ class CompanyVerificationStore(Protocol):
     """Everything the company signal needs from the warehouse."""
 
     def read_work_experience_companies(self) -> list[dict]:
-        """`raw_work_experience` rows: {experience_id, submission_id,
+        """`silver_work_experience` rows: {experience_id, submission_id,
         company_name}."""
 
     def get_verified_experience_ids(self) -> set[str]:
@@ -132,7 +133,7 @@ def run_verify_companies(
 
 
 # ── ASSET: verify_companies ───────────────────────────────────────────────
-@asset(deps=["extract_entities"])
+@asset(deps=["silver_work_experience"])
 def verify_companies():
     """
     Signal: company verification.

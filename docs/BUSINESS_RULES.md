@@ -306,8 +306,9 @@ is `not_evaluated` rather than `confirmed`.
 
 ### G10. A company is verified at 85% name similarity, low-confidence at 60%
 
-`external/companies_house/matching.py` → `VERIFIED_THRESHOLD = 85`,
-`LOW_CONFIDENCE_THRESHOLD = 60`
+`gold/rules/company_verification.py` → `VERIFIED_THRESHOLD = 85`,
+`LOW_CONFIDENCE_THRESHOLD = 60`, `classify_status()`. The name matching it
+scores lives in `external/companies_house/name_matching.py`.
 
 Fuzzy match of the CV's employer against the Companies House register, after
 normalizing: lowercase, punctuation stripped, and legal suffixes removed

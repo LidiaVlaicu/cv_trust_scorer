@@ -3,7 +3,7 @@ import os
 
 from google.cloud import bigquery
 
-from .matching import normalize_company_name
+from .name_matching import normalize_company_name
 from .models import CompanySearchResult, CompanyVerificationResult
 
 
@@ -16,11 +16,16 @@ class CompanyHouseStorage:
         )
 
         bronze_dataset = os.getenv("BQ_DATASET_BRONZE")
+        silver_dataset = os.getenv("BQ_DATASET_SILVER")
         gold_dataset = os.getenv("BQ_DATASET_GOLD")
 
+        # The employers to verify come from silver, like every other gold
+        # signal. Silver is row-for-row with bronze, so no employer is lost.
         self.work_experience_table_id = (
-            f"{self.client.project}.{bronze_dataset}.raw_work_experience"
+            f"{self.client.project}.{silver_dataset}.silver_work_experience"
         )
+        # The cached API responses stay in bronze: they are raw third-party
+        # output, not a cleaned reading of a CV.
         self.search_table_id = (
             f"{self.client.project}.{bronze_dataset}."
             "companies_house_search_results"

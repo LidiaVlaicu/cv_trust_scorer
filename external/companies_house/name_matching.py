@@ -1,21 +1,18 @@
 """
-Pure name-matching and classification logic for company verification.
+Pure name matching against the Companies House register.
+
+How a name is compared, not what the comparison means: the verdict and its
+thresholds live in gold/rules/company_verification.py.
 
 No I/O here — everything is a plain function over in-memory data, so it can
 be unit tested without mocking GCP or the Companies House API.
 """
 
 import re
-from typing import Literal
 
 from rapidfuzz import fuzz
 
 from .models import CompanySearchResult
-
-VERIFIED_THRESHOLD = 85
-LOW_CONFIDENCE_THRESHOLD = 60
-
-VerificationStatus = Literal["verified", "low_confidence", "not_found"]
 
 _LEGAL_SUFFIXES = (
     "limited", "ltd", "llc", "inc", "incorporated",
@@ -60,14 +57,3 @@ def find_best_match(
             best_candidate = candidate
 
     return best_candidate, best_score
-
-
-def classify_status(candidate_found: bool, score: float) -> VerificationStatus:
-    """Maps a match outcome to a verification status using the module thresholds."""
-    if not candidate_found:
-        return "not_found"
-    if score >= VERIFIED_THRESHOLD:
-        return "verified"
-    if score >= LOW_CONFIDENCE_THRESHOLD:
-        return "low_confidence"
-    return "not_found"
