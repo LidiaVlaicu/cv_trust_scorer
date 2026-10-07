@@ -88,7 +88,6 @@ def create_verification_signal_table() -> None:
         bigquery.SchemaField("company_name_cv", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("matched_company_number", "STRING"),
         bigquery.SchemaField("matched_company_name", "STRING"),
-        bigquery.SchemaField("match_score", "FLOAT64"),
         bigquery.SchemaField("status", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("verified_at", "TIMESTAMP", mode="REQUIRED"),
     ]

@@ -28,6 +28,5 @@ class CompanyVerificationResult(BaseModel):
     company_name_cv: str
     matched_company_number: str | None = None
     matched_company_name: str | None = None
-    match_score: float = 0.0
     status: str
     verified_at: datetime

@@ -1,33 +1,37 @@
 """
 The rules behind gold.signal_company_verification
 
-The verdict: given how closely a CV's employer matches a name in the Companies
-House register, can the employer be considered real?
+Can the employer a candidate claims be found in the Companies House register?
 
-Name matching itself lives in external/companies_house/name_matching.py, next to
-the API client whose response shape it reads. Only the verdict is here, with
-the other gold thresholds.
+Each employer carries one `status`:
+
+    confirmed      the register holds a company with the same name
+    partial_match  the register holds a similar name, not the same one
+    unconfirmed    nothing in the register matches the name
+
+There is no score and no threshold. The status follows from how the words of
+the two names compare, so every verdict can be checked by eye.
+
+Limitation: Companies House registers UK companies only, so this signal
+fully verifies UK CVs. For an employer in another country `unconfirmed`
+means this register cannot confirm it, not that the company is invented.
+Name matching lives in external/companies_house/name_matching.py.
 """
 
 from typing import Literal
 
-VERIFIED_THRESHOLD = 85
-LOW_CONFIDENCE_THRESHOLD = 60
+VerificationStatus = Literal["confirmed", "partial_match", "unconfirmed"]
 
-VerificationStatus = Literal["verified", "low_confidence", "not_found"]
+# How a name comparison becomes a verdict. A name that merely resembles a
+# registered one is reported as partial_match rather than being counted as
+# either confirmation or doubt.
+_STATUS_BY_MATCH: dict[str, VerificationStatus] = {
+    "exact": "confirmed",
+    "partial": "partial_match",
+    "different": "unconfirmed",
+}
 
 
-def classify_status(candidate_found: bool, score: float) -> VerificationStatus:
-    """
-    A name-similarity score as a verification status.
-
-    A score below LOW_CONFIDENCE_THRESHOLD is reported as not_found rather
-    than as a weak match: a name that different cannot be evidence either way.
-    """
-    if not candidate_found:
-        return "not_found"
-    if score >= VERIFIED_THRESHOLD:
-        return "verified"
-    if score >= LOW_CONFIDENCE_THRESHOLD:
-        return "low_confidence"
-    return "not_found"
+def classify_status(match: str) -> VerificationStatus:
+    """The verdict for one employer, from how its name compared."""
+    return _STATUS_BY_MATCH[match]

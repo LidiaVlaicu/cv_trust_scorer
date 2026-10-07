@@ -22,7 +22,7 @@ from dagster import asset, get_dagster_logger
 
 from external.companies_house.ingestion import fetch_company
 from external.companies_house.name_matching import (
-    find_best_match,
+    find_match,
     normalize_company_name,
 )
 from external.companies_house.models import (
@@ -105,8 +105,8 @@ def run_verify_companies(
         else:
             candidates = cached
 
-        best_match, score = find_best_match(company_name, candidates)
-        status = classify_status(best_match is not None, score)
+        best_match, match = find_match(company_name, candidates)
+        status = classify_status(match)
 
         results.append(
             CompanyVerificationResult(
@@ -117,13 +117,12 @@ def run_verify_companies(
                     best_match.company_number if best_match else None
                 ),
                 matched_company_name=best_match.title if best_match else None,
-                match_score=score,
                 status=status,
                 verified_at=now(),
             )
         )
 
-        report(f"[{status.upper()}] {company_name} (score={score:.0f})")
+        report(f"[{status.upper()}] {company_name}")
 
     if results:
         store.insert_verification_results(results)

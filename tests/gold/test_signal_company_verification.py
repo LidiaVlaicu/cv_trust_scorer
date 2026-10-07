@@ -9,41 +9,30 @@ from datetime import datetime, timezone
 import pytest
 import requests
 
-from external.companies_house.name_matching import normalize_company_name
 from external.companies_house.models import CompanySearchResult
+from external.companies_house.name_matching import normalize_company_name
 from gold.assets.signal_company_verification import run_verify_companies
-from gold.rules.company_verification import (
-    LOW_CONFIDENCE_THRESHOLD,
-    VERIFIED_THRESHOLD,
-    classify_status,
-)
+from gold.rules.company_verification import classify_status
 
 FIXED_TIME = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
 
 # ── the verdict ───────────────────────────────────────────────────────────
 @pytest.mark.parametrize(
-    "score, expected",
+    "match, expected",
     [
-        (100, "verified"),
-        (VERIFIED_THRESHOLD, "verified"),
-        (VERIFIED_THRESHOLD - 1, "low_confidence"),
-        (LOW_CONFIDENCE_THRESHOLD, "low_confidence"),
-        (LOW_CONFIDENCE_THRESHOLD - 1, "not_found"),
-        (0, "not_found"),
+        ("exact", "confirmed"),
+        ("partial", "partial_match"),
+        ("different", "unconfirmed"),
     ],
 )
-def test_a_score_maps_to_a_status(score, expected):
-    assert classify_status(True, score) == expected
+def test_a_name_comparison_maps_to_a_status(match, expected):
+    assert classify_status(match) == expected
 
 
-def test_no_candidate_is_not_found_whatever_the_score():
-    assert classify_status(False, 100) == "not_found"
-
-
-def test_a_name_too_different_is_not_found_rather_than_a_weak_match():
-    """Below the low-confidence floor the name is not evidence either way."""
-    assert classify_status(True, LOW_CONFIDENCE_THRESHOLD - 1) == "not_found"
+def test_a_similar_name_is_neither_confirmation_nor_doubt():
+    """partial_match is its own answer, not a weaker form of confirmed."""
+    assert classify_status("partial") == "partial_match"
 
 
 class FakeStore:
@@ -109,17 +98,29 @@ def _run(store: FakeStore, **kwargs):
     return result, sleeps
 
 
-def test_verifies_a_real_company_and_marks_a_fake_one_not_found():
+def test_a_shortened_employer_name_is_a_partial_match():
+    """A CV writing "Monzo" for "Monzo Bank Limited" is neither confirmed nor doubted."""
+    store = FakeStore(
+        [{"experience_id": "cv_9_job1", "submission_id": "cv_9", "company_name": "Monzo"}],
+        cache={"monzo": [_result("MONZO BANK LIMITED")]},
+    )
+    _run(store)
+
+    assert store.written[0].status == "partial_match"
+    assert store.written[0].matched_company_name == "MONZO BANK LIMITED"
+
+
+def test_confirms_a_real_company_and_leaves_a_fake_one_unconfirmed():
     store = FakeStore(COMPANIES)
     result, _ = _run(store)
 
     assert result["verified_count"] == 2
     by_id = {row.experience_id: row for row in store.written}
 
-    assert by_id["cv_1_job1"].status == "verified"
+    assert by_id["cv_1_job1"].status == "confirmed"
     assert by_id["cv_1_job1"].matched_company_name == "MONZO BANK LIMITED"
 
-    assert by_id["cv_2_job1"].status == "not_found"
+    assert by_id["cv_2_job1"].status == "unconfirmed"
     assert by_id["cv_2_job1"].matched_company_number is None
 
 

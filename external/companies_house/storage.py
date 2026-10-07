@@ -149,7 +149,6 @@ class CompanyHouseStorage:
                 "company_name_cv": result.company_name_cv,
                 "matched_company_number": result.matched_company_number,
                 "matched_company_name": result.matched_company_name,
-                "match_score": result.match_score,
                 "status": result.status,
                 "verified_at": result.verified_at.isoformat(),
             }

@@ -304,22 +304,34 @@ Senior's first listed role shows no prior months and would be read as junior.
 Rows with no stated level are left out, and a candidate with no levelled role
 is `not_evaluated` rather than `confirmed`.
 
-### G10. A company is verified at 85% name similarity, low-confidence at 60%
+### G10. An employer is confirmed when the register holds the same name
 
-`gold/rules/company_verification.py` → `VERIFIED_THRESHOLD = 85`,
-`LOW_CONFIDENCE_THRESHOLD = 60`, `classify_status()`. The name matching it
-scores lives in `external/companies_house/name_matching.py`.
+`gold/rules/company_verification.py` → `classify_status()`. The name
+comparison lives in `external/companies_house/name_matching.py`.
 
-Fuzzy match of the CV's employer against the Companies House register, after
-normalizing: lowercase, punctuation stripped, and legal suffixes removed
-(`limited`, `ltd`, `llc`, `inc`, `plc`, `corp`, `gmbh`, `llp`, …) so
-"Monzo Bank Ltd" and "MONZO BANK LIMITED" are the same name.
+Names are compared by their words, after normalizing: lowercase, punctuation
+stripped, and legal suffixes removed (`limited`, `ltd`, `llc`, `inc`, `plc`,
+`corp`, `gmbh`, `llp`, …) — so "Monzo Bank Ltd" and "MONZO BANK LIMITED" are
+the same name.
 
-| Score | Status |
+| Comparison | Status |
 |---|---|
-| ≥ 85 | `verified` |
-| 60–84 | `low_confidence` |
-| < 60, or no candidate | `not_found` |
+| the same words, in any order | `confirmed` |
+| one name's words all present in the other ("Monzo" / "Monzo Bank Limited") | `partial_match` |
+| neither, or no candidate at all | `unconfirmed` |
+
+**No score and no threshold.** The three outcomes follow from word
+comparison, so each verdict can be checked by eye. A typo is `unconfirmed`,
+not a near miss: there is no fuzzy matching.
+
+`partial_match` is its own answer, not a weaker `confirmed`. "Monzo" for
+"Monzo Bank Limited" is almost certainly the same company; "Smith Consulting"
+for "Smith Consulting Group Holdings" may not be. The signal says it cannot
+tell.
+
+**Limitation: Companies House registers UK companies only, so this signal
+fully verifies UK CVs.** For an employer in another country `unconfirmed`
+means this register cannot confirm it, not that the company is invented.
 
 A search returning nothing is cached as a NOT_FOUND sentinel, so an
 unfindable employer is not re-queried on every run.
