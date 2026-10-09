@@ -1,16 +1,23 @@
 from datetime import datetime, UTC
 import os
 
+from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
-from .name_matching import normalize_company_name
+from shared import ensure_table
+
+from .name_normalization import normalize_company_name
 from .models import CompanySearchResult, CompanyVerificationResult
 
 
 class CompanyHouseStorage:
     """Persists Company House responses and verification results into BigQuery."""
 
-    def __init__(self, client: bigquery.Client | None = None) -> None:
+    def __init__(
+        self,
+        client: bigquery.Client | None = None,
+        verification_schema: list[bigquery.SchemaField] | None = None,
+    ) -> None:
         self.client = client or bigquery.Client(
             project=os.getenv("GCP_PROJECT_ID")
         )
@@ -34,6 +41,9 @@ class CompanyHouseStorage:
             f"{self.client.project}.{gold_dataset}."
             "signal_company_verification"
         )
+        # The gold asset owns the signal table, so it supplies the schema;
+        # this class only needs it to create the table before appending.
+        self._verification_schema = verification_schema
 
     def read_work_experience_companies(self) -> list[dict]:
         """The employers to verify: {experience_id, submission_id, company_name}."""
@@ -142,6 +152,11 @@ class CompanyHouseStorage:
         if not results:
             return
 
+        if self._verification_schema is not None:
+            ensure_table(
+                self.client, self.verification_table_id, self._verification_schema
+            )
+
         rows = [
             {
                 "submission_id": result.submission_id,
@@ -164,9 +179,17 @@ class CompanyHouseStorage:
             raise RuntimeError(errors)
 
     def get_verified_experience_ids(self) -> set[str]:
+        """
+        The experience_ids already written to the signal table, empty on the
+        first run before the table exists.
+
+        Only NotFound is caught. Any other failure must surface: an empty set
+        here means "verify everything again", and the signal table is appended
+        to, so a swallowed error would silently duplicate every row.
+        """
         query = f"SELECT experience_id FROM `{self.verification_table_id}`"
         try:
             rows = self.client.query(query).result()
             return {row["experience_id"] for row in rows}
-        except Exception:
+        except NotFound:
             return set()

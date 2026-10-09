@@ -1,7 +1,16 @@
+"""
+Creates the Companies House search cache in bronze.
+
+The cache accumulates paid-for API responses, so it is appended to rather than
+replaced and has to exist before the first write. The gold signal table it
+used to create is now declared by the asset that writes it, in
+gold/assets/signal_company_verification.py.
+"""
+
 import os
 
-from google.cloud import bigquery
 from dotenv import load_dotenv
+from google.cloud import bigquery
 
 load_dotenv()
 
@@ -73,32 +82,5 @@ def create_table() -> None:
         print(f"{table_id} already up to date")
 
 
-def create_verification_signal_table() -> None:
-    client = bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
-
-    dataset = os.getenv("BQ_DATASET_GOLD")
-
-    table_id = (
-        f"{client.project}.{dataset}.signal_company_verification"
-    )
-
-    schema = [
-        bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("experience_id", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("company_name_cv", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("matched_company_number", "STRING"),
-        bigquery.SchemaField("matched_company_name", "STRING"),
-        bigquery.SchemaField("status", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("verified_at", "TIMESTAMP", mode="REQUIRED"),
-    ]
-
-    table = bigquery.Table(table_id, schema=schema)
-
-    client.create_table(table, exists_ok=True)
-
-    print(f"Created {table_id}")
-
-
 if __name__ == "__main__":
     create_table()
-    create_verification_signal_table()

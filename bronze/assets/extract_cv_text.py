@@ -19,6 +19,7 @@ from typing import Callable, Literal, Protocol
 
 import fitz
 from dagster import asset, get_dagster_logger
+from google.cloud import bigquery
 
 from bronze.rules.cv_analysis import classify_profile, compute_file_hash
 from bronze.io.gcs_storage import (
@@ -30,11 +31,23 @@ from bronze.io.bigquery_persistence import (
     BRONZE_DATASET,
     PROJECT_ID,
     delete_cv_data,
+    ensure_table,
     get_processed_versions,
     insert_rows_to_bigquery,
 )
 
 CV_TEXTS_TABLE = "raw_cv_texts"
+# Matches the live table. Bronze appends, so the table has to exist before the
+# first insert - see ensure_table.
+CV_TEXTS_SCHEMA = [
+    bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("content_hash", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("cv_file_path", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("submission_timestamp", "TIMESTAMP", mode="REQUIRED"),
+    bigquery.SchemaField("raw_text", "STRING"),
+    bigquery.SchemaField("profile_type", "STRING"),
+    bigquery.SchemaField("folder", "STRING"),
+]
 FOLDERS = ("inconsistent", "legitimate")
 
 Action = Literal["new", "unchanged", "changed"]
@@ -125,9 +138,9 @@ class GcsBigQueryCvTextStore:
         delete_cv_data(submission_id)
 
     def insert_cv_texts(self, rows: list[dict]) -> None:
-        insert_rows_to_bigquery(
-            f"{PROJECT_ID}.{BRONZE_DATASET}.{CV_TEXTS_TABLE}", rows
-        )
+        table = f"{PROJECT_ID}.{BRONZE_DATASET}.{CV_TEXTS_TABLE}"
+        ensure_table(table, CV_TEXTS_SCHEMA)
+        insert_rows_to_bigquery(table, rows)
 
 
 def read_pdf_text(pdf_bytes: bytes) -> str:

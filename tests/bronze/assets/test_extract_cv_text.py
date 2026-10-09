@@ -197,3 +197,15 @@ def test_build_cv_text_row_is_pure():
     args = ("cv_1", TECHNICAL_TEXT, "hash", "cvs/raw/x/cv_1.pdf", "x", FIXED_TIME, "b")
 
     assert build_cv_text_row(*args) == build_cv_text_row(*args)
+
+
+def test_the_schema_covers_every_column_written():
+    """Guards against a column being added to the row but not the table."""
+    from bronze.assets.extract_cv_text import CV_TEXTS_SCHEMA
+
+    store = FakeCvTextStore(PDFS)
+    rows = _run(store)
+
+    schema_fields = {field.name for field in CV_TEXTS_SCHEMA}
+    for row in rows:
+        assert set(row) == schema_fields

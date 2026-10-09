@@ -8,6 +8,22 @@ def table_id(client: bigquery.Client, dataset: str, table: str) -> str:
     return f"{client.project}.{dataset}.{table}"
 
 
+def ensure_table(
+    client: bigquery.Client,
+    table: str,
+    schema: list[bigquery.SchemaField],
+) -> None:
+    """
+    Create `table` with `schema` if it does not exist; a no-op when it does,
+    and it never alters an existing table.
+
+    Needed only by the tables that are appended to - the bronze raw tables and
+    the company signal. A table written with `replace_table` is created by the
+    load job itself.
+    """
+    client.create_table(bigquery.Table(table, schema=schema), exists_ok=True)
+
+
 def replace_table(
     client: bigquery.Client,
     table: str,

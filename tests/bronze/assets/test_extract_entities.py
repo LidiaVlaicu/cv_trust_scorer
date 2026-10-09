@@ -215,3 +215,27 @@ def test_build_entity_rows_is_pure():
     second = build_entity_rows("cv_1", cv_data, FIXED_TIME)
 
     assert first == second
+
+
+def test_the_schemas_cover_every_column_written():
+    """Guards against a column being added to a row but not to its table."""
+    from bronze.assets.extract_entities import (
+        CANDIDATES_TABLE,
+        SCHEMAS,
+        SKILLS_TABLE,
+        WORK_EXPERIENCE_TABLE,
+    )
+
+    store = FakeEntitiesStore(CV_TEXTS)
+    _run(store)
+
+    written = {
+        CANDIDATES_TABLE: store.candidates,
+        WORK_EXPERIENCE_TABLE: store.work_experience,
+        SKILLS_TABLE: store.skills,
+    }
+    for table, rows in written.items():
+        schema_fields = {field.name for field in SCHEMAS[table]}
+        assert rows, f"no rows written for {table}"
+        for row in rows:
+            assert set(row) == schema_fields

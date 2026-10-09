@@ -110,10 +110,9 @@ pytest
 
 ## Known inconsistencies
 
-None outstanding. Company verification keeps its name matching in
-`external/companies_house/name_matching.py`, next to the API client whose
-response shape it reads; the verdict is in
-`gold/rules/company_verification.py` with the other gold rules.
+None outstanding. Every signal's rules live in its own `gold/rules/` module,
+company verification included; `external/companies_house/` holds only API
+concerns, plus the name normalization its search cache shares with the rules.
 
 All three gold signals read silver. Every asset follows the same shape: a pure
 core, a protocol naming the reads and writes, the real adapter, and a `run_*()`

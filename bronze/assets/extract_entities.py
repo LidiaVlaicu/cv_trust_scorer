@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from typing import Callable, Protocol
 
 from dagster import asset, get_dagster_logger
+from google.cloud import bigquery
 from pydantic import ValidationError
 
 from bronze.io.llm_extraction import extract_cv_data_with_claude
@@ -26,6 +27,7 @@ from bronze.io.gcs_storage import save_json_to_gcs
 from bronze.io.bigquery_persistence import (
     BRONZE_DATASET,
     PROJECT_ID,
+    ensure_table,
     get_all_cv_texts,
     get_processed_submission_ids,
     insert_rows_to_bigquery,
@@ -34,6 +36,40 @@ from bronze.io.bigquery_persistence import (
 CANDIDATES_TABLE = "raw_candidates"
 WORK_EXPERIENCE_TABLE = "raw_work_experience"
 SKILLS_TABLE = "raw_skills"
+
+# Match the live tables. Bronze appends, so a table has to exist before the
+# first insert - see ensure_table. Only raw_candidates enforces its keys at
+# the database level; for the other two that job falls to the asset checks.
+SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
+    CANDIDATES_TABLE: [
+        bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("candidate_name", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("email", "STRING"),
+        bigquery.SchemaField("phone", "STRING"),
+        bigquery.SchemaField("linkedin", "STRING"),
+        bigquery.SchemaField("github", "STRING"),
+        bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+    ],
+    WORK_EXPERIENCE_TABLE: [
+        bigquery.SchemaField("experience_id", "STRING"),
+        bigquery.SchemaField("submission_id", "STRING"),
+        bigquery.SchemaField("company_name", "STRING"),
+        bigquery.SchemaField("job_title", "STRING"),
+        # bronze keeps the date as the CV wrote it; silver parses it
+        bigquery.SchemaField("start_date_raw", "STRING"),
+        bigquery.SchemaField("end_date_raw", "STRING"),
+        bigquery.SchemaField("description", "STRING"),
+        bigquery.SchemaField("is_current", "BOOLEAN"),
+        bigquery.SchemaField("location", "STRING"),
+        bigquery.SchemaField("company_website", "STRING"),
+    ],
+    SKILLS_TABLE: [
+        bigquery.SchemaField("skill_id", "STRING"),
+        bigquery.SchemaField("submission_id", "STRING"),
+        bigquery.SchemaField("skill_name", "STRING"),
+        bigquery.SchemaField("skill_category", "STRING"),
+    ],
+}
 
 
 # ── Pure core ─────────────────────────────────────────────────────────────
@@ -121,7 +157,9 @@ class BigQueryEntitiesStore:
         return get_processed_submission_ids(WORK_EXPERIENCE_TABLE)
 
     def _insert(self, table: str, rows: list[dict]) -> None:
-        insert_rows_to_bigquery(f"{PROJECT_ID}.{BRONZE_DATASET}.{table}", rows)
+        table_id = f"{PROJECT_ID}.{BRONZE_DATASET}.{table}"
+        ensure_table(table_id, SCHEMAS[table])
+        insert_rows_to_bigquery(table_id, rows)
 
     def insert_candidates(self, rows: list[dict]) -> None:
         self._insert(CANDIDATES_TABLE, rows)

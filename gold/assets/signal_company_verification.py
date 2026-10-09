@@ -9,8 +9,8 @@ Structure: a thin I/O shell around the pure matching rules.
 
 The store, the Companies House search and the sleep are injected, so the
 run function works against an in-memory fake with no BigQuery and no API
-calls. The verdict lives in gold/rules/company_verification.py, the name
-matching in external/companies_house/name_matching.py.
+calls. Every rule - how names compare and what the comparison means -
+lives in gold/rules/company_verification.py.
 """
 
 import time
@@ -19,20 +19,31 @@ from typing import Callable, Protocol
 
 import requests
 from dagster import asset, get_dagster_logger
+from google.cloud import bigquery
 
 from external.companies_house.ingestion import fetch_company
-from external.companies_house.name_matching import (
-    find_match,
-    normalize_company_name,
-)
 from external.companies_house.models import (
     CompanySearchResult,
     CompanyVerificationResult,
 )
+from external.companies_house.name_normalization import normalize_company_name
 from external.companies_house.storage import CompanyHouseStorage
-from gold.rules.company_verification import classify_status
+from gold.rules.company_verification import classify_status, find_match
 
 LIVE_API_SLEEP_SECONDS = 0.5
+
+SIGNAL_TABLE = "signal_company_verification"
+# One row per role, appended rather than replaced, so the table has to exist
+# before the first insert. Matches the live table.
+SIGNAL_SCHEMA = [
+    bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("experience_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("company_name_cv", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("matched_company_number", "STRING"),
+    bigquery.SchemaField("matched_company_name", "STRING"),
+    bigquery.SchemaField("status", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("verified_at", "TIMESTAMP", mode="REQUIRED"),
+]
 
 
 # ── I/O boundary ──────────────────────────────────────────────────────────
@@ -143,6 +154,6 @@ def verify_companies():
     the same employer don't re-hit the API.
     """
     return run_verify_companies(
-        CompanyHouseStorage(),
+        CompanyHouseStorage(verification_schema=SIGNAL_SCHEMA),
         report=get_dagster_logger().info,
     )

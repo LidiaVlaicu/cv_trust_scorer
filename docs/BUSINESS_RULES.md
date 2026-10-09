@@ -306,8 +306,9 @@ is `not_evaluated` rather than `confirmed`.
 
 ### G10. An employer is confirmed when the register holds the same name
 
-`gold/rules/company_verification.py` → `classify_status()`. The name
-comparison lives in `external/companies_house/name_matching.py`.
+`gold/rules/company_verification.py` → `compare_names()`, `find_match()`,
+`classify_status()`. Normalizing a name is shared with the search cache, so
+it lives in `external/companies_house/name_normalization.py`.
 
 Names are compared by their words, after normalizing: lowercase, punctuation
 stripped, and legal suffixes removed (`limited`, `ltd`, `llc`, `inc`, `plc`,
