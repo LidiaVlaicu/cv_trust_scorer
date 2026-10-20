@@ -12,23 +12,17 @@ license = { text = "MIT" }
 authors = [ { name = "Lidia Danilov" } ]
 
 dependencies = [
-  "pymupdf",
-  "spacy",
-  "transformers",
-  "torch",
-  "fastapi",
-  "uvicorn",
-  "streamlit",
+  "pymupdf",            # bronze reads the CV PDFs through fitz
   "dagster",
-  "dagster-webserver",
-  "dbt-bigquery",
+  "dagster-webserver",  # the Dagster UI; a tool, not an import
   "requests",
-  "python-magic",
-  "pydantic-ai",
+  "pydantic",
+  "python-dotenv",
+  "anthropic",          # bronze entity extraction and the dataset generator
   "google-cloud-storage",
   "google-cloud-bigquery",
-  "reportlab",      # dataset_generation/text_to_pdf.py renders the synthetic CVs
-  "phonenumbers",   # silver/logic phone normalization to E.164
+  "reportlab",          # dataset_generation/text_to_pdf.py renders the synthetic CVs
+  "phonenumbers",       # silver/logic phone normalization to E.164
 ]
 
 [project.optional-dependencies]
@@ -43,6 +37,11 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I"]
+
+# Black already holds every line of code to 88 characters. What still runs
+# over is prose inside comments and docstrings, which black leaves alone and
+# which reads worse when broken to fit.
+ignore = ["E501"]
 
 [tool.isort]
 profile = "black"
