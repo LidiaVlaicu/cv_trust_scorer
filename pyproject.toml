@@ -11,22 +11,31 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [ { name = "Lidia Danilov" } ]
 
+# Pinned to the versions the test suite passes against. Unpinned, an install
+# takes whatever was released that day, so a breaking version turns CI red for
+# reasons that have nothing to do with this code.
 dependencies = [
-  "pymupdf",            # bronze reads the CV PDFs through fitz
-  "dagster",
-  "dagster-webserver",  # the Dagster UI; a tool, not an import
-  "requests",
-  "pydantic",
-  "python-dotenv",
-  "anthropic",          # bronze entity extraction and the dataset generator
-  "google-cloud-storage",
-  "google-cloud-bigquery",
-  "reportlab",          # dataset_generation/text_to_pdf.py renders the synthetic CVs
-  "phonenumbers",       # silver/logic phone normalization to E.164
+  "pymupdf==1.28.2",                # bronze reads the CV PDFs through fitz
+  "dagster==1.13.21",
+  "dagster-webserver==1.13.21",     # the Dagster UI; a tool, not an import
+  "requests==2.34.2",
+  "pydantic==2.13.5",
+  "python-dotenv==1.2.3",
+  "anthropic==1.4.0",               # bronze extraction and the dataset generator
+  "google-cloud-storage==3.1.1",
+  "google-cloud-bigquery==3.45.0",
+  "reportlab==5.0.1",               # text_to_pdf.py renders the synthetic CVs
+  "phonenumbers==9.0.40",           # silver phone normalization to E.164
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "black", "ruff", "isort", "pre-commit"]
+dev = [
+  "pytest==9.1.1",
+  "black==26.5.1",
+  "ruff==0.16.6",
+  "isort==9.0.1",
+  "pre-commit==4.6.2",
+]
 
 [tool.black]
 line-length = 88
