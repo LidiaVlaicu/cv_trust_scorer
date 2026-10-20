@@ -21,12 +21,6 @@ import fitz
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from bronze.rules.cv_analysis import classify_profile, compute_file_hash
-from bronze.io.gcs_storage import (
-    BUCKET_NAME,
-    download_pdf_from_gcs,
-    list_pdfs_in_gcs,
-)
 from bronze.io.bigquery_persistence import (
     BRONZE_DATASET,
     PROJECT_ID,
@@ -35,6 +29,12 @@ from bronze.io.bigquery_persistence import (
     get_processed_versions,
     insert_rows_to_bigquery,
 )
+from bronze.io.gcs_storage import (
+    BUCKET_NAME,
+    download_pdf_from_gcs,
+    list_pdfs_in_gcs,
+)
+from bronze.rules.cv_analysis import classify_profile, compute_file_hash
 
 CV_TEXTS_TABLE = "raw_cv_texts"
 # Matches the live table. Bronze appends, so the table has to exist before the

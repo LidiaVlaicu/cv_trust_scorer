@@ -19,7 +19,10 @@ from silver.rules.work_experience import (
 )
 
 JOB_TITLE_ROWS = [
-    {"job_title": "Senior Software Engineer - Backend Systems", "seniority_level": "Senior"},
+    {
+        "job_title": "Senior Software Engineer - Backend Systems",
+        "seniority_level": "Senior",
+    },
     {"job_title": "Software Engineer (Junior)", "seniority_level": "Junior"},
     {"job_title": "Staff Engineer - Cloud Infrastructure", "seniority_level": "Staff"},
     {"job_title": "Data Analyst", "seniority_level": None},
@@ -45,10 +48,18 @@ def test_standardize_job_title_replaces_every_non_word_character():
         standardize_job_title("Staff Engineer - Cloud Infrastructure")
         == "Staff Engineer Cloud Infrastructure"
     )
-    assert standardize_job_title("Software Engineer (Junior)") == "Software Engineer Junior"
-    assert standardize_job_title("Research Engineer, Staff") == "Research Engineer Staff"
+    assert (
+        standardize_job_title("Software Engineer (Junior)")
+        == "Software Engineer Junior"
+    )
+    assert (
+        standardize_job_title("Research Engineer, Staff") == "Research Engineer Staff"
+    )
     assert standardize_job_title("Mid-Level Data Analyst") == "Mid Level Data Analyst"
-    assert standardize_job_title("Data Analyst (Placement Year)") == "Data Analyst Placement Year"
+    assert (
+        standardize_job_title("Data Analyst (Placement Year)")
+        == "Data Analyst Placement Year"
+    )
 
 
 def test_standardize_job_title_collapses_whitespace_and_handles_empty():
@@ -58,9 +69,9 @@ def test_standardize_job_title_collapses_whitespace_and_handles_empty():
 
 def test_standardize_job_title_merges_the_separator_twins():
     """The two titles that differ only by '-' versus ',' must come out equal."""
-    assert standardize_job_title("Senior Backend Engineer - Platform Team") == standardize_job_title(
-        "Senior Backend Engineer, Platform Team"
-    )
+    assert standardize_job_title(
+        "Senior Backend Engineer - Platform Team"
+    ) == standardize_job_title("Senior Backend Engineer, Platform Team")
 
 
 def test_standardize_job_title_keeps_digits():

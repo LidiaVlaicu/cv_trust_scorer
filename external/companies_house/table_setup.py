@@ -20,9 +20,7 @@ def create_table() -> None:
 
     dataset = os.getenv("BQ_DATASET_BRONZE")
 
-    table_id = (
-        f"{client.project}.{dataset}.companies_house_search_results"
-    )
+    table_id = f"{client.project}.{dataset}.companies_house_search_results"
 
     schema = [
         bigquery.SchemaField(

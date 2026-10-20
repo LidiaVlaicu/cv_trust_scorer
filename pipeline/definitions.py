@@ -4,12 +4,12 @@ from dagster import (
     load_assets_from_modules,
 )
 
+from bronze.assets import check_assets, extract_cv_text, extract_entities
 from gold.assets import (
     signal_company_verification,
     signal_responsibility_mismatch,
     signal_timeline_consistency,
 )
-from bronze.assets import check_assets, extract_cv_text, extract_entities
 from silver.assets import (
     silver_candidates,
     silver_skills,

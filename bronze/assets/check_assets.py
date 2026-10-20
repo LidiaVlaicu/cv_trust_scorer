@@ -20,7 +20,7 @@ be used at all:
                 create and which then disappears from every join
 
 Columns that are legitimately empty are NOT checked, because a check that
-always fails gets ignored. 
+always fails gets ignored.
 
 Severity: a broken id or a duplicate is ERROR, because silver cannot be
 trusted afterwards. Missing content is WARN - one unreadable CV among 300 is
@@ -86,7 +86,8 @@ def _result(failures: dict[str, int], *, severity: AssetCheckSeverity, subject: 
         metadata={"problems_found": problems or "none", "checked": subject},
         description=(
             f"{subject}: " + ", ".join(f"{n} ({c} rows)" for n, c in problems.items())
-            if problems else f"{subject}: all rows usable"
+            if problems
+            else f"{subject}: all rows usable"
         ),
     )
 
@@ -100,7 +101,9 @@ def raw_cv_texts_is_usable():
             "submission_id blank": _blank_count("raw_cv_texts", "submission_id"),
             "raw_text blank": _blank_count("raw_cv_texts", "raw_text"),
             "content_hash blank": _blank_count("raw_cv_texts", "content_hash"),
-            "duplicate submission_id": _duplicate_count("raw_cv_texts", "submission_id"),
+            "duplicate submission_id": _duplicate_count(
+                "raw_cv_texts", "submission_id"
+            ),
         },
         severity=AssetCheckSeverity.ERROR,
         subject="raw_cv_texts",
@@ -121,24 +124,29 @@ def entity_ids_are_unique_and_linked():
     """
     return _result(
         {
-            "raw_candidates: blank submission_id":
-                _blank_count("raw_candidates", "submission_id"),
-            "raw_candidates: duplicate submission_id":
-                _duplicate_count("raw_candidates", "submission_id"),
-            "raw_work_experience: blank experience_id":
-                _blank_count("raw_work_experience", "experience_id"),
-            "raw_work_experience: duplicate experience_id":
-                _duplicate_count("raw_work_experience", "experience_id"),
-            "raw_skills: blank skill_id":
-                _blank_count("raw_skills", "skill_id"),
-            "raw_skills: duplicate skill_id":
-                _duplicate_count("raw_skills", "skill_id"),
-            "raw_candidates: no matching CV":
-                _rows_with_no_matching_cv("raw_candidates"),
-            "raw_work_experience: no matching CV":
-                _rows_with_no_matching_cv("raw_work_experience"),
-            "raw_skills: no matching CV":
-                _rows_with_no_matching_cv("raw_skills"),
+            "raw_candidates: blank submission_id": _blank_count(
+                "raw_candidates", "submission_id"
+            ),
+            "raw_candidates: duplicate submission_id": _duplicate_count(
+                "raw_candidates", "submission_id"
+            ),
+            "raw_work_experience: blank experience_id": _blank_count(
+                "raw_work_experience", "experience_id"
+            ),
+            "raw_work_experience: duplicate experience_id": _duplicate_count(
+                "raw_work_experience", "experience_id"
+            ),
+            "raw_skills: blank skill_id": _blank_count("raw_skills", "skill_id"),
+            "raw_skills: duplicate skill_id": _duplicate_count(
+                "raw_skills", "skill_id"
+            ),
+            "raw_candidates: no matching CV": _rows_with_no_matching_cv(
+                "raw_candidates"
+            ),
+            "raw_work_experience: no matching CV": _rows_with_no_matching_cv(
+                "raw_work_experience"
+            ),
+            "raw_skills: no matching CV": _rows_with_no_matching_cv("raw_skills"),
         },
         severity=AssetCheckSeverity.ERROR,
         subject="entity ids and CV links",
@@ -156,18 +164,21 @@ def entity_content_is_present():
     """
     return _result(
         {
-            "raw_candidates: candidate_name blank":
-                _blank_count("raw_candidates", "candidate_name"),
-            "raw_work_experience: company_name blank":
-                _blank_count("raw_work_experience", "company_name"),
-            "raw_work_experience: job_title blank":
-                _blank_count("raw_work_experience", "job_title"),
+            "raw_candidates: candidate_name blank": _blank_count(
+                "raw_candidates", "candidate_name"
+            ),
+            "raw_work_experience: company_name blank": _blank_count(
+                "raw_work_experience", "company_name"
+            ),
+            "raw_work_experience: job_title blank": _blank_count(
+                "raw_work_experience", "job_title"
+            ),
             # bronze keeps the date exactly as the CV wrote it ("August 2017"),
             # so the column is start_date_raw; parsing happens in silver
-            "raw_work_experience: start_date_raw blank":
-                _blank_count("raw_work_experience", "start_date_raw"),
-            "raw_skills: skill_name blank":
-                _blank_count("raw_skills", "skill_name"),
+            "raw_work_experience: start_date_raw blank": _blank_count(
+                "raw_work_experience", "start_date_raw"
+            ),
+            "raw_skills: skill_name blank": _blank_count("raw_skills", "skill_name"),
         },
         severity=AssetCheckSeverity.WARN,
         subject="entity content",
@@ -195,6 +206,7 @@ def every_cv_produced_entities():
         metadata={"cvs_with_no_entities": silent, "cvs_total": total},
         description=(
             f"{silent} of {total} CVs produced no work experience and no skills"
-            if silent else f"all {total} CVs produced entities"
+            if silent
+            else f"all {total} CVs produced entities"
         ),
     )

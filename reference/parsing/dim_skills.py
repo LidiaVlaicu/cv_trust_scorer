@@ -50,7 +50,9 @@ def parse_skills_taxonomy(csv_text: str) -> list[TaxonomyAlias]:
 
     missing_columns = {CANONICAL_COLUMN, ALIASES_COLUMN} - set(reader.fieldnames)
     if missing_columns:
-        raise TaxonomyError(f"Taxonomy CSV is missing columns: {sorted(missing_columns)}")
+        raise TaxonomyError(
+            f"Taxonomy CSV is missing columns: {sorted(missing_columns)}"
+        )
 
     parsed: list[TaxonomyAlias] = []
 

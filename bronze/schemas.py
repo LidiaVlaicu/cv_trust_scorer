@@ -4,7 +4,8 @@ The shape Claude's CV extraction must have.
 If the response validates against these models, everything downstream can
 trust the structure.
 """
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class WorkExperienceItem(BaseModel):
@@ -16,6 +17,7 @@ class WorkExperienceItem(BaseModel):
     structured dates happens in the silver layer transformations, where we
     can apply consistent normalization rules.
     """
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
     job_title: str = Field(..., min_length=1, max_length=200)
@@ -49,6 +51,7 @@ class ExtractedCV(BaseModel):
     always include LinkedIn, GitHub, or phone numbers. Required fields
     (candidate_name, work_experience) cause validation to fail if missing.
     """
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
     candidate_name: str = Field(..., min_length=1, max_length=200)

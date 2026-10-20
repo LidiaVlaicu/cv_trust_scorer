@@ -27,7 +27,7 @@ def test_the_same_name_is_exact():
 
 
 def test_a_legal_suffix_variant_is_exact():
-    """"Acme Ltd" and "Acme Limited" are the same company."""
+    """ "Acme Ltd" and "Acme Limited" are the same company."""
     assert compare_names("Acme Ltd", "Acme Limited") == "exact"
 
 
@@ -138,8 +138,16 @@ class FakeStore:
 
 
 COMPANIES = [
-    {"experience_id": "cv_1_job1", "submission_id": "cv_1", "company_name": "Monzo Bank Ltd"},
-    {"experience_id": "cv_2_job1", "submission_id": "cv_2", "company_name": "Totally Fake Co"},
+    {
+        "experience_id": "cv_1_job1",
+        "submission_id": "cv_1",
+        "company_name": "Monzo Bank Ltd",
+    },
+    {
+        "experience_id": "cv_2_job1",
+        "submission_id": "cv_2",
+        "company_name": "Totally Fake Co",
+    },
 ]
 
 REGISTER = {
@@ -181,7 +189,13 @@ def test_confirms_a_real_company_and_leaves_a_fake_one_unconfirmed():
 def test_a_shortened_employer_name_is_a_partial_match():
     """A CV writing "Monzo" for "Monzo Bank Limited" is neither confirmed nor doubted."""
     store = FakeStore(
-        [{"experience_id": "cv_9_job1", "submission_id": "cv_9", "company_name": "Monzo"}],
+        [
+            {
+                "experience_id": "cv_9_job1",
+                "submission_id": "cv_9",
+                "company_name": "Monzo",
+            }
+        ],
         cache={"monzo": [_result("MONZO BANK LIMITED")]},
     )
     _run(store)
@@ -216,14 +230,16 @@ def test_a_cached_search_does_not_hit_the_api_or_sleep():
 
 def test_the_same_employer_is_searched_once_across_cvs():
     """Two CVs claiming the same employer should cost one API call."""
-    store = FakeStore([
-        COMPANIES[0],
-        {
-            "experience_id": "cv_9_job1",
-            "submission_id": "cv_9",
-            "company_name": "Monzo Bank Limited",
-        },
-    ])
+    store = FakeStore(
+        [
+            COMPANIES[0],
+            {
+                "experience_id": "cv_9_job1",
+                "submission_id": "cv_9",
+                "company_name": "Monzo Bank Limited",
+            },
+        ]
+    )
     result, sleeps = _run(store)
 
     assert result["verified_count"] == 2

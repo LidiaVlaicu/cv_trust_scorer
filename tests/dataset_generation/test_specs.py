@@ -37,8 +37,18 @@ def test_an_odd_total_puts_the_extra_cv_in_legitimate():
 def test_ids_are_sequential_and_zero_padded():
     specs = generate_specs(12)
     assert [spec["id"] for spec in specs] == [
-        "001", "002", "003", "004", "005", "006",
-        "007", "008", "009", "010", "011", "012",
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007",
+        "008",
+        "009",
+        "010",
+        "011",
+        "012",
     ]
 
 
@@ -114,10 +124,14 @@ def test_a_location_phone_prefix_belongs_to_its_country():
 @pytest.mark.parametrize(
     "spec, expected",
     [
-        ({"id": "001", "role": "Data Engineer", "seniority": "Senior"},
-         "cv_001_data_engineer_senior.pdf"),
-        ({"id": "150", "role": "Machine Learning Engineer", "seniority": "Staff"},
-         "cv_150_machine_learning_engineer_staff.pdf"),
+        (
+            {"id": "001", "role": "Data Engineer", "seniority": "Senior"},
+            "cv_001_data_engineer_senior.pdf",
+        ),
+        (
+            {"id": "150", "role": "Machine Learning Engineer", "seniority": "Staff"},
+            "cv_150_machine_learning_engineer_staff.pdf",
+        ),
     ],
 )
 def test_cv_filename(spec, expected):

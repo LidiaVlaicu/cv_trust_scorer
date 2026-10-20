@@ -17,6 +17,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
+
 def clean_skill(raw_skill: str) -> str:
     """
     CLEANING. Removes noise without changing meaning: normalizes Unicode
@@ -125,5 +126,3 @@ def transform_skill_row(row: dict, taxonomy: SkillsTaxonomy) -> dict:
         "raw_skill": raw_skill,
         "normalized_skill": taxonomy.canonical_for(skill_lookup_key(raw_skill)),
     }
-
-

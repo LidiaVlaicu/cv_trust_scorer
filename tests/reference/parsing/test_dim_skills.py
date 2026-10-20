@@ -7,8 +7,6 @@ if someone later edits the CSV and accidentally collapses Looker into Looker
 Studio, these fail.
 """
 
-from pathlib import Path
-
 import pytest
 
 from reference import SKILLS_TAXONOMY_CSV as TAXONOMY_CSV
@@ -115,6 +113,8 @@ def test_real_csv_parses_and_builds_a_conflict_free_taxonomy():
 )
 def test_real_csv_golden_examples(raw_skill, expected):
     taxonomy = build_skills_taxonomy(
-        to_bigquery_rows(parse_skills_taxonomy(TAXONOMY_CSV.read_text(encoding="utf-8")))
+        to_bigquery_rows(
+            parse_skills_taxonomy(TAXONOMY_CSV.read_text(encoding="utf-8"))
+        )
     )
     assert normalize_skill(raw_skill, taxonomy) == expected

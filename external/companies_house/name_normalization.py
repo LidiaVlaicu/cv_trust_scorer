@@ -10,12 +10,19 @@ same name.
 import re
 
 _LEGAL_SUFFIXES = (
-    "limited", "ltd", "llc", "inc", "incorporated",
-    "plc", "corp", "corporation", "co", "gmbh", "llp",
+    "limited",
+    "ltd",
+    "llc",
+    "inc",
+    "incorporated",
+    "plc",
+    "corp",
+    "corporation",
+    "co",
+    "gmbh",
+    "llp",
 )
-_SUFFIX_PATTERN = re.compile(
-    r"\b(" + "|".join(_LEGAL_SUFFIXES) + r")\b\.?"
-)
+_SUFFIX_PATTERN = re.compile(r"\b(" + "|".join(_LEGAL_SUFFIXES) + r")\b\.?")
 _PUNCTUATION_PATTERN = re.compile(r"[^\w\s]")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 

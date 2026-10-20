@@ -13,8 +13,8 @@ from typing import Callable, Protocol
 from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
-from shared import bigquery_client, dataset_name, replace_table, table_id
 from gold.rules.responsibility_mismatch import build_signal_rows
+from shared import bigquery_client, dataset_name, replace_table, table_id
 
 SIGNAL_TABLE = "signal_responsibility_mismatch"
 SIGNAL_SCHEMA = [

@@ -13,9 +13,9 @@ COLUMNS = ["job_title", "seniority_level"]
 def test_parse_returns_stripped_rows_limited_to_required_columns():
     text = "job_title,seniority_level,notes\n  Staff Engineer , Staff ,whatever\n"
 
-    assert read_csv_rows(
-        text, required_columns=COLUMNS, key_column="job_title"
-    ) == [{"job_title": "Staff Engineer", "seniority_level": "Staff"}]
+    assert read_csv_rows(text, required_columns=COLUMNS, key_column="job_title") == [
+        {"job_title": "Staff Engineer", "seniority_level": "Staff"}
+    ]
 
 
 def test_parse_rejects_missing_column():

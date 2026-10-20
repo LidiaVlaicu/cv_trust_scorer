@@ -74,7 +74,8 @@ def test_rules_modules_perform_no_io(module: Path):
     module, which is free to import anything.
     """
     violations = sorted(
-        imported for imported in imported_names(module)
+        imported
+        for imported in imported_names(module)
         if any(
             imported == forbidden or imported.startswith(f"{forbidden}.")
             for forbidden in FORBIDDEN_IN_RULES
@@ -97,7 +98,8 @@ def test_rules_modules_never_import_an_assets_module(module: Path):
     make the layer circular.
     """
     offending = sorted(
-        imported for imported in imported_names(module)
+        imported
+        for imported in imported_names(module)
         if ".assets" in imported or imported.endswith("assets")
     )
     assert not offending, (
@@ -113,7 +115,8 @@ def test_reference_data_is_pure_too():
     """
     ladder = REPO_ROOT / "reference" / "seniority_ladder.py"
     violations = sorted(
-        imported for imported in imported_names(ladder)
+        imported
+        for imported in imported_names(ladder)
         if any(
             imported == forbidden or imported.startswith(f"{forbidden}.")
             for forbidden in FORBIDDEN_IN_RULES

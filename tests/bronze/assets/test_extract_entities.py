@@ -202,9 +202,7 @@ def test_every_row_carries_the_injected_timestamp():
     store = FakeEntitiesStore(CV_TEXTS)
     _run(store)
 
-    assert {row["extracted_at"] for row in store.candidates} == {
-        FIXED_TIME.isoformat()
-    }
+    assert {row["extracted_at"] for row in store.candidates} == {FIXED_TIME.isoformat()}
 
 
 def test_build_entity_rows_is_pure():

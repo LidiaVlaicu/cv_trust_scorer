@@ -20,6 +20,7 @@ load_dotenv()
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 BRONZE_DATASET = os.environ["BQ_DATASET_BRONZE"]
 
+
 # ── BigQuery helpers ──────────────────────────────────────────────────────
 def ensure_table(table_id: str, schema: list[bigquery.SchemaField]) -> None:
     """
@@ -59,6 +60,7 @@ def delete_cv_data(submission_id: str):
             ]
         )
         client.query(query, job_config=job_config).result()
+
 
 def get_processed_versions(table, id_col="submission_id", hash_col="content_hash"):
     """
@@ -119,4 +121,3 @@ def get_processed_submission_ids(table, id_col="submission_id"):
         return {row[id_col] for row in rows}
     except NotFound:
         return set()
-

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 from google.cloud import storage
 
@@ -7,6 +8,7 @@ load_dotenv()
 
 # ── Configuration ─────────────────────────────────────────────────────────
 BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+
 
 # ── Upload function ───────────────────────────────────────────────────────
 def upload_cvs_to_gcs():
@@ -49,8 +51,13 @@ def upload_cvs_to_gcs():
     print(f"Uploaded: {uploaded} | Skipped: {skipped} | Failed: {failed}")
 
     print("\nGCS structure:")
-    print(f"gs://{BUCKET_NAME}/cvs/raw/inconsistent/  ({sum(1 for _ in Path('data/inconsistent').glob('*.pdf') if Path('data/inconsistent').exists())} files)")
-    print(f"gs://{BUCKET_NAME}/cvs/raw/legitimate/    ({sum(1 for _ in Path('data/legitimate').glob('*.pdf') if Path('data/legitimate').exists())} files)")
+    print(
+        f"gs://{BUCKET_NAME}/cvs/raw/inconsistent/  ({sum(1 for _ in Path('data/inconsistent').glob('*.pdf') if Path('data/inconsistent').exists())} files)"
+    )
+    print(
+        f"gs://{BUCKET_NAME}/cvs/raw/legitimate/    ({sum(1 for _ in Path('data/legitimate').glob('*.pdf') if Path('data/legitimate').exists())} files)"
+    )
+
 
 if __name__ == "__main__":
     if not BUCKET_NAME:

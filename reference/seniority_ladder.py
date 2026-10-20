@@ -40,18 +40,18 @@ senior titles. See MIN_EXPERIENCE_MONTHS users for how that bias is absorbed.
 
 # Level name as standardized in silver -> (ladder level, minimum years, from source)
 LADDER: dict[str, tuple[str, int, bool]] = {
-    "Intern":     ("E1", 0, True),
+    "Intern": ("E1", 0, True),
     "Apprentice": ("E1", 0, True),
-    "Graduate":   ("E1", 0, True),
-    "Junior":     ("E2", 1, True),
-    "Mid":        ("E3", 2, True),
-    "Senior":     ("E4", 4, True),
-    "Lead":       ("E5", 7, True),
-    "Staff":      ("E5", 7, True),
-    "Principal":  ("E6", 11, True),
+    "Graduate": ("E1", 0, True),
+    "Junior": ("E2", 1, True),
+    "Mid": ("E3", 2, True),
+    "Senior": ("E4", 4, True),
+    "Lead": ("E5", 7, True),
+    "Staff": ("E5", 7, True),
+    "Principal": ("E6", 11, True),
     # Not on the guide's IC ladder; mapped by equivalent scope (see docstring).
-    "Manager":    ("E5", 7, False),
-    "Director":   ("E6", 11, False),
+    "Manager": ("E5", 7, False),
+    "Director": ("E6", 11, False),
 }
 
 # Minimum months of prior experience the ladder associates with each level.
@@ -64,7 +64,8 @@ MIN_EXPERIENCE_MONTHS: dict[str, int] = {
 # design decisions - so a claim of leading a large team or owning a budget
 # contradicts the title itself.
 JUNIOR_LEVELS: frozenset[str] = frozenset(
-    level for level, (ladder_level, _, _) in LADDER.items()
+    level
+    for level, (ladder_level, _, _) in LADDER.items()
     if ladder_level in {"E1", "E2"}
 )
 

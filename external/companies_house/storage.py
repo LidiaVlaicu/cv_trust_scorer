@@ -1,13 +1,13 @@
-from datetime import datetime, UTC
 import os
+from datetime import UTC, datetime
 
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
 from shared import ensure_table
 
-from .name_normalization import normalize_company_name
 from .models import CompanySearchResult, CompanyVerificationResult
+from .name_normalization import normalize_company_name
 
 
 class CompanyHouseStorage:
@@ -18,9 +18,7 @@ class CompanyHouseStorage:
         client: bigquery.Client | None = None,
         verification_schema: list[bigquery.SchemaField] | None = None,
     ) -> None:
-        self.client = client or bigquery.Client(
-            project=os.getenv("GCP_PROJECT_ID")
-        )
+        self.client = client or bigquery.Client(project=os.getenv("GCP_PROJECT_ID"))
 
         bronze_dataset = os.getenv("BQ_DATASET_BRONZE")
         silver_dataset = os.getenv("BQ_DATASET_SILVER")
@@ -34,12 +32,10 @@ class CompanyHouseStorage:
         # The cached API responses stay in bronze: they are raw third-party
         # output, not a cleaned reading of a CV.
         self.search_table_id = (
-            f"{self.client.project}.{bronze_dataset}."
-            "companies_house_search_results"
+            f"{self.client.project}.{bronze_dataset}." "companies_house_search_results"
         )
         self.verification_table_id = (
-            f"{self.client.project}.{gold_dataset}."
-            "signal_company_verification"
+            f"{self.client.project}.{gold_dataset}." "signal_company_verification"
         )
         # The gold asset owns the signal table, so it supplies the schema;
         # this class only needs it to create the table before appending.

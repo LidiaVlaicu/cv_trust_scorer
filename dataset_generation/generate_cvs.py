@@ -41,8 +41,10 @@ def main() -> None:
             continue
 
         inconsistencies = ", ".join(spec["inconsistency_types"]) or "none"
-        print(f"[{spec['id']}] {spec['seniority']} {spec['role']} "
-              f"({spec['folder']}) | {inconsistencies}")
+        print(
+            f"[{spec['id']}] {spec['seniority']} {spec['role']} "
+            f"({spec['folder']}) | {inconsistencies}"
+        )
         try:
             text_to_pdf(generate_cv_text(build_cv_prompt(spec)), str(output_path))
             print(f"       Saved: {output_path}")

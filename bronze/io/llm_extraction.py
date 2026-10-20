@@ -14,6 +14,7 @@ import anthropic
 
 from bronze.schemas import ExtractedCV
 
+
 # ── Claude extraction ───────────────────────────────────────────────
 def extract_cv_data_with_claude(raw_text):
     """
@@ -62,7 +63,7 @@ CV TEXT:
     message = client.messages.create(
         model="claude-haiku-4-5",
         max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
     )
 
     response_text = message.content[0].text.strip()
@@ -73,4 +74,3 @@ CV TEXT:
 
     cv_data = ExtractedCV.model_validate_json(response_text)
     return cv_data
-

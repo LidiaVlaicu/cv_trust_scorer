@@ -6,11 +6,11 @@ real review file so an accidental edit to it fails loudly.
 import pytest
 
 from reference import LOCATION_ALIASES_CSV
+from reference.parsing.common.reference_csv import ReferenceDataError
 from reference.parsing.dim_location_aliases import (
     parse_location_aliases,
     to_bigquery_rows,
 )
-from reference.parsing.common.reference_csv import ReferenceDataError
 from silver.rules.work_experience import build_work_experience_reference
 
 

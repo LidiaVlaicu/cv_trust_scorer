@@ -11,10 +11,19 @@ import random
 from dataset_generation.inconsistencies import INCONSISTENCY_TYPES
 
 ROLES = [
-    "Data Engineer", "Data Scientist", "Machine Learning Engineer",
-    "DevOps Engineer", "Software Engineer", "Backend Engineer",
-    "Frontend Engineer", "Full Stack Engineer", "Data Analyst",
-    "BI Analyst", "Staff Engineer", "Principal Engineer", "Research Engineer",
+    "Data Engineer",
+    "Data Scientist",
+    "Machine Learning Engineer",
+    "DevOps Engineer",
+    "Software Engineer",
+    "Backend Engineer",
+    "Frontend Engineer",
+    "Full Stack Engineer",
+    "Data Analyst",
+    "BI Analyst",
+    "Staff Engineer",
+    "Principal Engineer",
+    "Research Engineer",
     "Forward Deployed Engineer",
 ]
 
@@ -25,35 +34,35 @@ SENIOR_ONLY_ROLES = ["Staff Engineer", "Principal Engineer"]
 # candidates publish more: a portfolio matters most when there is little
 # employment history to show.
 SENIORITY_CONFIG = {
-    "Junior": {"years": ["1", "2"],         "github_prob": 0.7},
-    "Mid":    {"years": ["3", "4", "5"],    "github_prob": 0.5},
-    "Senior": {"years": ["6", "7", "8"],    "github_prob": 0.3},
-    "Staff":  {"years": ["10", "12", "14"], "github_prob": 0.1},
+    "Junior": {"years": ["1", "2"], "github_prob": 0.7},
+    "Mid": {"years": ["3", "4", "5"], "github_prob": 0.5},
+    "Senior": {"years": ["6", "7", "8"], "github_prob": 0.3},
+    "Staff": {"years": ["10", "12", "14"], "github_prob": 0.1},
 }
 
 # Half UK, half elsewhere in Europe. The phone prefix belongs to the city, so
 # a mismatch between them is something an inconsistency must introduce.
 LOCATIONS = [
-    {"city": "London",      "country": "United Kingdom", "phone": "+44"},
-    {"city": "Manchester",  "country": "United Kingdom", "phone": "+44"},
-    {"city": "Edinburgh",   "country": "United Kingdom", "phone": "+44"},
-    {"city": "Bristol",     "country": "United Kingdom", "phone": "+44"},
-    {"city": "Birmingham",  "country": "United Kingdom", "phone": "+44"},
-    {"city": "Leeds",       "country": "United Kingdom", "phone": "+44"},
-    {"city": "Glasgow",     "country": "United Kingdom", "phone": "+44"},
-    {"city": "Cambridge",   "country": "United Kingdom", "phone": "+44"},
-    {"city": "Oxford",      "country": "United Kingdom", "phone": "+44"},
-    {"city": "Liverpool",   "country": "United Kingdom", "phone": "+44"},
-    {"city": "Berlin",      "country": "Germany",        "phone": "+49"},
-    {"city": "Amsterdam",   "country": "Netherlands",    "phone": "+31"},
-    {"city": "Paris",       "country": "France",         "phone": "+33"},
-    {"city": "Barcelona",   "country": "Spain",          "phone": "+34"},
-    {"city": "Madrid",      "country": "Spain",          "phone": "+34"},
-    {"city": "Lisbon",      "country": "Portugal",       "phone": "+351"},
-    {"city": "Dublin",      "country": "Ireland",        "phone": "+353"},
-    {"city": "Stockholm",   "country": "Sweden",         "phone": "+46"},
-    {"city": "Copenhagen",  "country": "Denmark",        "phone": "+45"},
-    {"city": "Zurich",      "country": "Switzerland",    "phone": "+41"},
+    {"city": "London", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Manchester", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Edinburgh", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Bristol", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Birmingham", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Leeds", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Glasgow", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Cambridge", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Oxford", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Liverpool", "country": "United Kingdom", "phone": "+44"},
+    {"city": "Berlin", "country": "Germany", "phone": "+49"},
+    {"city": "Amsterdam", "country": "Netherlands", "phone": "+31"},
+    {"city": "Paris", "country": "France", "phone": "+33"},
+    {"city": "Barcelona", "country": "Spain", "phone": "+34"},
+    {"city": "Madrid", "country": "Spain", "phone": "+34"},
+    {"city": "Lisbon", "country": "Portugal", "phone": "+351"},
+    {"city": "Dublin", "country": "Ireland", "phone": "+353"},
+    {"city": "Stockholm", "country": "Sweden", "phone": "+46"},
+    {"city": "Copenhagen", "country": "Denmark", "phone": "+45"},
+    {"city": "Zurich", "country": "Switzerland", "phone": "+41"},
 ]
 
 # Fixed so the dataset is reproducible: the same seed yields the same plan, and
@@ -80,7 +89,8 @@ def _draw_candidate(rng: random.Random) -> dict:
     """The attributes every CV has, whether or not it carries inconsistencies."""
     role = rng.choice(ROLES)
     seniority = (
-        rng.choice(["Senior", "Staff"]) if role in SENIOR_ONLY_ROLES
+        rng.choice(["Senior", "Staff"])
+        if role in SENIOR_ONLY_ROLES
         else rng.choice(list(SENIORITY_CONFIG))
     )
     config = SENIORITY_CONFIG[seniority]
@@ -117,11 +127,13 @@ def generate_specs(total: int = 300) -> list[dict]:
             chosen = rng.sample(inconsistency_keys, min(count, len(inconsistency_keys)))
         else:
             chosen = []
-        specs.append({
-            "id": str(number).zfill(3),
-            "folder": "inconsistent" if is_inconsistent else "legitimate",
-            **candidate,
-            "inconsistency_types": chosen,
-            "inconsistencies": [INCONSISTENCY_TYPES[key] for key in chosen],
-        })
+        specs.append(
+            {
+                "id": str(number).zfill(3),
+                "folder": "inconsistent" if is_inconsistent else "legitimate",
+                **candidate,
+                "inconsistency_types": chosen,
+                "inconsistencies": [INCONSISTENCY_TYPES[key] for key in chosen],
+            }
+        )
     return specs

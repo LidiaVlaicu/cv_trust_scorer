@@ -236,12 +236,18 @@ def test_a_career_may_begin_at_an_entry_level_title():
     E1-E2 titles carry no prior-experience requirement here: starting your
     career as a Junior with no earlier roles is normal, not a shortfall.
     """
-    assert seniority_shortfall_months(
-        spans([job("2025-01-01", None, seniority="Junior", current=True)])
-    ) == 0
-    assert seniority_shortfall_months(
-        spans([job("2025-01-01", None, seniority="Graduate", current=True)])
-    ) == 0
+    assert (
+        seniority_shortfall_months(
+            spans([job("2025-01-01", None, seniority="Junior", current=True)])
+        )
+        == 0
+    )
+    assert (
+        seniority_shortfall_months(
+            spans([job("2025-01-01", None, seniority="Graduate", current=True)])
+        )
+        == 0
+    )
 
 
 def test_a_senior_claim_cannot_fire_under_the_six_year_margin():
@@ -291,9 +297,7 @@ def test_confidence_rule():
     possible = [
         {"name": "employment_overlap_minor", "months": 2, "evidence": "suggestive"}
     ]
-    data_issue = [
-        {"name": "unevaluable_dates", "months": 1, "evidence": "data_issue"}
-    ]
+    data_issue = [{"name": "unevaluable_dates", "months": 1, "evidence": "data_issue"}]
 
     assert timeline_confidence(proven + possible, 3) == "not_confirmed"
     assert timeline_confidence(possible, 3) == "possible"

@@ -99,7 +99,9 @@ class WorkExperienceReference:
         return self.seniority_by_title.get((job_title or "").strip().casefold())
 
     def country_for(self, location_token: str) -> str | None:
-        return self.country_by_location_token.get((location_token or "").strip().casefold())
+        return self.country_by_location_token.get(
+            (location_token or "").strip().casefold()
+        )
 
 
 def build_work_experience_reference(
@@ -189,7 +191,11 @@ def split_location(
 
     if len(parts) == 1:
         # Either a bare city ("Stockholm") or a bare country ("Sweden").
-        city_token = "" if country and country_token.casefold() == country.casefold() else parts[0]
+        city_token = (
+            ""
+            if country and country_token.casefold() == country.casefold()
+            else parts[0]
+        )
     else:
         city_token = parts[-2]
 

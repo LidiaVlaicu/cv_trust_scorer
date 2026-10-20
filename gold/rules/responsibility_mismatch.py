@@ -249,11 +249,12 @@ def build_signal_rows(
     for submission_id, jobs in sorted(by_candidate.items()):
         findings = find_responsibility_mismatches(jobs)
         levelled = sum(1 for job in jobs if job.get("seniority_level"))
-        signal_rows.append({
-            "submission_id": submission_id,
-            "confidence": responsibility_confidence(findings, levelled),
-            "findings": findings,
-            "evaluated_at": timestamp,
-        })
+        signal_rows.append(
+            {
+                "submission_id": submission_id,
+                "confidence": responsibility_confidence(findings, levelled),
+                "findings": findings,
+                "evaluated_at": timestamp,
+            }
+        )
     return signal_rows
-

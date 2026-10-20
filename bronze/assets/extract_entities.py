@@ -20,10 +20,6 @@ from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 from pydantic import ValidationError
 
-from bronze.io.llm_extraction import extract_cv_data_with_claude
-from bronze.rules.cv_analysis import categorize_skill
-from bronze.schemas import ExtractedCV
-from bronze.io.gcs_storage import save_json_to_gcs
 from bronze.io.bigquery_persistence import (
     BRONZE_DATASET,
     PROJECT_ID,
@@ -32,6 +28,10 @@ from bronze.io.bigquery_persistence import (
     get_processed_submission_ids,
     insert_rows_to_bigquery,
 )
+from bronze.io.gcs_storage import save_json_to_gcs
+from bronze.io.llm_extraction import extract_cv_data_with_claude
+from bronze.rules.cv_analysis import categorize_skill
+from bronze.schemas import ExtractedCV
 
 CANDIDATES_TABLE = "raw_candidates"
 WORK_EXPERIENCE_TABLE = "raw_work_experience"
@@ -231,9 +231,7 @@ def run_extract_entities(
             },
         )
 
-        report(
-            f"[OK] {submission_id} -> {len(experiences)} jobs, {len(skills)} skills"
-        )
+        report(f"[OK] {submission_id} -> {len(experiences)} jobs, {len(skills)} skills")
 
     if candidate_rows:
         store.insert_candidates(candidate_rows)
