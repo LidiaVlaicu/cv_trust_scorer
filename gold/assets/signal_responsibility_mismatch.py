@@ -15,6 +15,7 @@ from google.cloud import bigquery
 
 from gold.rules.responsibility_mismatch import build_signal_rows
 from shared import bigquery_client, dataset_name, replace_table, table_id
+from shared.timing import timed
 
 SIGNAL_TABLE = "signal_responsibility_mismatch"
 SIGNAL_SCHEMA = [
@@ -137,7 +138,11 @@ def signal_responsibility_mismatch():
 
     Writes one row per candidate to the gold dataset.
     """
-    return run_signal_responsibility_mismatch(
-        BigQueryResponsibilityWarehouse(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "signal_responsibility_mismatch",
+        report,
+        lambda: run_signal_responsibility_mismatch(
+            BigQueryResponsibilityWarehouse(), report=report
+        ),
     )

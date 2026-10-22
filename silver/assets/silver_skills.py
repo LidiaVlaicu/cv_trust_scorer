@@ -21,6 +21,7 @@ from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
 from shared import bigquery_client, dataset_name, replace_table, table_id
+from shared.timing import timed
 from silver.rules.skills import (
     SkillsTaxonomy,
     build_skills_taxonomy,
@@ -186,7 +187,9 @@ def silver_skills():
     Cleaning (Unicode/whitespace) and standardization (lowercasing for the
     lookup) happen inside the transform; they are not persisted as columns.
     """
-    return run_silver_skills(
-        BigQuerySkillsWarehouse(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "silver_skills",
+        report,
+        lambda: run_silver_skills(BigQuerySkillsWarehouse(), report=report),
     )

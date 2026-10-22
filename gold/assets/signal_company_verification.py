@@ -29,6 +29,7 @@ from external.companies_house.models import (
 from external.companies_house.name_normalization import normalize_company_name
 from external.companies_house.storage import CompanyHouseStorage
 from gold.rules.company_verification import classify_status, find_match
+from shared.timing import timed
 
 LIVE_API_SLEEP_SECONDS = 0.5
 
@@ -153,7 +154,11 @@ def verify_companies():
     Search results are cached by normalized company name so CVs that repeat
     the same employer don't re-hit the API.
     """
-    return run_verify_companies(
-        CompanyHouseStorage(verification_schema=SIGNAL_SCHEMA),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "verify_companies",
+        report,
+        lambda: run_verify_companies(
+            CompanyHouseStorage(verification_schema=SIGNAL_SCHEMA), report=report
+        ),
     )

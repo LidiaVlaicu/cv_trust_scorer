@@ -32,6 +32,7 @@ from bronze.io.gcs_storage import save_json_to_gcs
 from bronze.io.llm_extraction import extract_cv_data_with_claude
 from bronze.rules.cv_analysis import categorize_skill
 from bronze.schemas import ExtractedCV
+from shared.timing import timed
 
 CANDIDATES_TABLE = "raw_candidates"
 WORK_EXPERIENCE_TABLE = "raw_work_experience"
@@ -266,7 +267,9 @@ def extract_entities():
     always sees the full current set rather than whatever extract_raw_text
     returned on its last run.
     """
-    return run_extract_entities(
-        BigQueryEntitiesStore(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "extract_entities",
+        report,
+        lambda: run_extract_entities(BigQueryEntitiesStore(), report=report),
     )

@@ -99,7 +99,16 @@ def test_each_asset_returns_the_summary_dagster_shows(
 ):
     returned, _, _ = invoke(module, asset, adapter, runner)
 
-    assert returned == SUMMARY
+    assert returned.items() >= SUMMARY.items()
+
+
+@pytest.mark.parametrize("module,asset,adapter,runner", ASSETS, ids=IDS)
+def test_each_asset_records_how_long_it_took(invoke, module, asset, adapter, runner):
+    """The summary is what Dagster shows, so the duration travels with it."""
+    returned, _, _ = invoke(module, asset, adapter, runner)
+
+    assert isinstance(returned["duration_seconds"], float)
+    assert returned["duration_seconds"] >= 0
 
 
 @pytest.mark.parametrize("module,asset,adapter,runner", ASSETS, ids=IDS)

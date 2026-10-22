@@ -35,6 +35,7 @@ from bronze.io.gcs_storage import (
     list_pdfs_in_gcs,
 )
 from bronze.rules.cv_analysis import classify_profile, compute_file_hash
+from shared.timing import timed
 
 CV_TEXTS_TABLE = "raw_cv_texts"
 # Matches the live table. Bronze appends, so the table has to exist before the
@@ -227,7 +228,9 @@ def extract_raw_text():
     A CV whose content hash is unchanged is skipped; a changed one has its
     old rows deleted from every bronze table before being reprocessed.
     """
-    return run_extract_raw_text(
-        GcsBigQueryCvTextStore(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "extract_raw_text",
+        report,
+        lambda: run_extract_raw_text(GcsBigQueryCvTextStore(), report=report),
     )

@@ -21,6 +21,7 @@ from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
 from shared import bigquery_client, dataset_name, replace_table, table_id
+from shared.timing import timed
 from silver.rules.work_experience import (
     WorkExperienceReference,
     build_work_experience_reference,
@@ -229,7 +230,11 @@ def silver_work_experience():
       country aliases resolved through dim_location_aliases
       (UK, Scotland, Northern Ireland -> United Kingdom)
     """
-    return run_silver_work_experience(
-        BigQueryWorkExperienceWarehouse(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "silver_work_experience",
+        report,
+        lambda: run_silver_work_experience(
+            BigQueryWorkExperienceWarehouse(), report=report
+        ),
     )

@@ -20,6 +20,7 @@ from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
 from shared import bigquery_client, dataset_name, replace_table, table_id
+from shared.timing import timed
 from silver.rules.candidates import transform_candidate_row
 
 SILVER_CANDIDATES_TABLE = "silver_candidates"
@@ -138,7 +139,9 @@ def silver_candidates():
     - email: kept as-is, with an is_email_valid flag (has "@", a domain,
       no spaces, and matches a standard email pattern)
     """
-    return run_silver_candidates(
-        BigQueryCandidatesWarehouse(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "silver_candidates",
+        report,
+        lambda: run_silver_candidates(BigQueryCandidatesWarehouse(), report=report),
     )
