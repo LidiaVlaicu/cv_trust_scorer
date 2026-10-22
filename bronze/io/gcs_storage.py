@@ -16,6 +16,7 @@ load_dotenv()
 
 BUCKET_NAME = os.environ["GCS_BUCKET_NAME"]
 
+
 # ── GCS helpers ───────────────────────────────────────────────────────────
 def list_pdfs_in_gcs(folder):
     """Returns a list of all PDF blobs in the given GCS folder."""
@@ -40,7 +41,5 @@ def save_json_to_gcs(data, gcs_path):
     bucket = client.bucket(BUCKET_NAME)
     blob = bucket.blob(gcs_path)
     blob.upload_from_string(
-        json.dumps(data, indent=2, default=str),
-        content_type="application/json"
+        json.dumps(data, indent=2, default=str), content_type="application/json"
     )
-

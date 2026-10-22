@@ -59,7 +59,11 @@ def test_review_file_standardized_column_matches_the_code():
         key_column="job_title",
     )
     mismatched = [
-        (r["job_title"], r["job_title_standardized"], standardize_job_title(r["job_title"]))
+        (
+            r["job_title"],
+            r["job_title_standardized"],
+            standardize_job_title(r["job_title"]),
+        )
         for r in rows
         if standardize_job_title(r["job_title"]) != r["job_title_standardized"]
     ]

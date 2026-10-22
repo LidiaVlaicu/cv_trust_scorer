@@ -49,7 +49,8 @@ def build_cv_prompt(spec: dict) -> str:
 
     summary_instruction = "" if "ai_text" in inconsistency_keys else HUMAN_SUMMARY
     github_line = (
-        "GitHub URL with 3-4 relevant public repositories" if spec["github"]
+        "GitHub URL with 3-4 relevant public repositories"
+        if spec["github"]
         else "No GitHub URL"
     )
 

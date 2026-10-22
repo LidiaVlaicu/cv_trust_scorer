@@ -77,3 +77,12 @@ def test_transform_candidate_row_handles_missing_and_invalid_fields():
     assert result["is_email_valid"] is False
     assert result["phone"] is None
     assert result["is_phone_valid"] is False
+
+
+def test_a_phone_that_cannot_be_parsed_at_all_is_rejected():
+    """phonenumbers raises rather than returning an invalid number here."""
+    assert standardize_phone("not a phone number") is None
+
+
+def test_a_phone_of_only_punctuation_is_rejected():
+    assert standardize_phone("+++") is None

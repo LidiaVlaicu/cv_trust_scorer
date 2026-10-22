@@ -19,22 +19,37 @@ from typing import Callable, Literal, Protocol
 
 import fitz
 from dagster import asset, get_dagster_logger
+from google.cloud import bigquery
 
-from bronze.rules.cv_analysis import classify_profile, compute_file_hash
-from bronze.io.gcs_storage import (
-    BUCKET_NAME,
-    download_pdf_from_gcs,
-    list_pdfs_in_gcs,
-)
 from bronze.io.bigquery_persistence import (
     BRONZE_DATASET,
     PROJECT_ID,
     delete_cv_data,
+    ensure_table,
     get_processed_versions,
     insert_rows_to_bigquery,
 )
+from bronze.io.gcs_storage import (
+    BUCKET_NAME,
+    download_pdf_from_gcs,
+    list_pdfs_in_gcs,
+    save_json_to_gcs,
+)
+from bronze.rules.cv_analysis import classify_profile, compute_file_hash
+from shared.timing import timed
 
 CV_TEXTS_TABLE = "raw_cv_texts"
+# Matches the live table. Bronze appends, so the table has to exist before the
+# first insert - see ensure_table.
+CV_TEXTS_SCHEMA = [
+    bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("content_hash", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("cv_file_path", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("submission_timestamp", "TIMESTAMP", mode="REQUIRED"),
+    bigquery.SchemaField("raw_text", "STRING"),
+    bigquery.SchemaField("profile_type", "STRING"),
+    bigquery.SchemaField("folder", "STRING"),
+]
 FOLDERS = ("inconsistent", "legitimate")
 
 Action = Literal["new", "unchanged", "changed"]
@@ -101,6 +116,9 @@ class CvTextStore(Protocol):
     def insert_cv_texts(self, rows: list[dict]) -> None:
         """Appends rows to raw_cv_texts."""
 
+    def archive_raw_text(self, submission_id: str, payload: dict) -> None:
+        """Keeps the extracted text as JSON, beside the entity archive."""
+
 
 class GcsBigQueryCvTextStore:
     """CvTextStore backed by GCS and BigQuery."""
@@ -125,9 +143,12 @@ class GcsBigQueryCvTextStore:
         delete_cv_data(submission_id)
 
     def insert_cv_texts(self, rows: list[dict]) -> None:
-        insert_rows_to_bigquery(
-            f"{PROJECT_ID}.{BRONZE_DATASET}.{CV_TEXTS_TABLE}", rows
-        )
+        table = f"{PROJECT_ID}.{BRONZE_DATASET}.{CV_TEXTS_TABLE}"
+        ensure_table(table, CV_TEXTS_SCHEMA)
+        insert_rows_to_bigquery(table, rows)
+
+    def archive_raw_text(self, submission_id: str, payload: dict) -> None:
+        save_json_to_gcs(payload, f"cvs/extracted/raw_text/{submission_id}.json")
 
 
 def read_pdf_text(pdf_bytes: bytes) -> str:
@@ -181,6 +202,7 @@ def run_extract_raw_text(
                     report(f"[SKIP empty text] {filename}")
                     continue
 
+                store.archive_raw_text(submission_id, {"raw_text": raw_text})
                 rows.append(
                     build_cv_text_row(
                         submission_id,
@@ -214,7 +236,9 @@ def extract_raw_text():
     A CV whose content hash is unchanged is skipped; a changed one has its
     old rows deleted from every bronze table before being reprocessed.
     """
-    return run_extract_raw_text(
-        GcsBigQueryCvTextStore(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "extract_raw_text",
+        report,
+        lambda: run_extract_raw_text(GcsBigQueryCvTextStore(), report=report),
     )

@@ -21,6 +21,7 @@ from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
 from shared import bigquery_client, dataset_name, replace_table, table_id
+from shared.timing import timed
 from silver.rules.work_experience import (
     WorkExperienceReference,
     build_work_experience_reference,
@@ -63,7 +64,10 @@ def build_silver_work_experience_rows(
     """
     timestamp = processed_at.isoformat()
     return [
-        {**transform_work_experience_row(row, reference), "silver_processed_at": timestamp}
+        {
+            **transform_work_experience_row(row, reference),
+            "silver_processed_at": timestamp,
+        }
         for row in raw_rows
     ]
 
@@ -78,7 +82,9 @@ def summarize_gaps(silver_rows: list[dict], sample_size: int) -> dict:
         row["job_title"] for row in silver_rows if not row["seniority_level"]
     )
     missing_country = Counter(
-        row["location"] for row in silver_rows if row["location"] and not row["location_country"]
+        row["location"]
+        for row in silver_rows
+        if row["location"] and not row["location_country"]
     )
     date_problems: Counter = Counter()
     for row in silver_rows:
@@ -224,7 +230,11 @@ def silver_work_experience():
       country aliases resolved through dim_location_aliases
       (UK, Scotland, Northern Ireland -> United Kingdom)
     """
-    return run_silver_work_experience(
-        BigQueryWorkExperienceWarehouse(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "silver_work_experience",
+        report,
+        lambda: run_silver_work_experience(
+            BigQueryWorkExperienceWarehouse(), report=report
+        ),
     )

@@ -21,6 +21,7 @@ from dagster import asset, get_dagster_logger
 from google.cloud import bigquery
 
 from shared import bigquery_client, dataset_name, replace_table, table_id
+from shared.timing import timed
 from silver.rules.skills import (
     SkillsTaxonomy,
     build_skills_taxonomy,
@@ -57,7 +58,9 @@ def build_silver_skills_rows(
     ]
 
 
-def summarize_unmatched(silver_rows: list[dict], sample_size: int) -> list[tuple[str, int]]:
+def summarize_unmatched(
+    silver_rows: list[dict], sample_size: int
+) -> list[tuple[str, int]]:
     """
     The most frequent skills that did not match the taxonomy, worst first.
 
@@ -138,7 +141,9 @@ def run_silver_skills(
     runnable with no BigQuery and no Dagster.
     """
     taxonomy = build_skills_taxonomy(warehouse.read_taxonomy())
-    report(f"Taxonomy: {taxonomy.alias_count} aliases -> {len(taxonomy.canonical_skills)} canonical skills")
+    report(
+        f"Taxonomy: {taxonomy.alias_count} aliases -> {len(taxonomy.canonical_skills)} canonical skills"
+    )
 
     raw_skills = warehouse.read_raw_skills()
     report(f"Read {len(raw_skills)} rows from raw_skills")
@@ -182,7 +187,9 @@ def silver_skills():
     Cleaning (Unicode/whitespace) and standardization (lowercasing for the
     lookup) happen inside the transform; they are not persisted as columns.
     """
-    return run_silver_skills(
-        BigQuerySkillsWarehouse(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "silver_skills",
+        report,
+        lambda: run_silver_skills(BigQuerySkillsWarehouse(), report=report),
     )

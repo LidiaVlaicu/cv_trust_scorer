@@ -11,7 +11,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from gold.assets.signal_responsibility_mismatch import run_signal_responsibility_mismatch
+from gold.assets.signal_responsibility_mismatch import (
+    run_signal_responsibility_mismatch,
+)
 from gold.rules.responsibility_mismatch import (
     BUDGET_MILLIONS_FLAG,
     TEAM_FAR_ABOVE_LEVEL,
@@ -89,9 +91,12 @@ def test_mentoring_alone_is_not_management():
 
 
 def test_the_largest_claim_in_a_description_wins():
-    assert people_managed(
-        "Led a team of 6 engineers, later managing 30 engineers after a merger"
-    ) == 30
+    assert (
+        people_managed(
+            "Led a team of 6 engineers, later managing 30 engineers after a merger"
+        )
+        == 30
+    )
 
 
 def test_no_description_claims_nothing():
@@ -129,7 +134,7 @@ def test_money_that_is_not_a_budget(description):
 
 # ── check 1: team ownership at an E1/E2 level ─────────────────────────────
 def test_a_junior_who_directed_a_team_is_flagged():
-    finding, = find_responsibility_mismatches(
+    (finding,) = find_responsibility_mismatches(
         [job("Junior", "Directed a team of 22 engineers across two sites")]
     )
     assert finding == {
@@ -160,15 +165,23 @@ def test_any_team_size_counts_at_a_junior_level():
 
 
 def test_a_junior_doing_junior_things_is_not_flagged():
-    assert names([
-        job("Junior", "Built REST endpoints in Python and wrote unit tests, "
-                      "mentored 2 interns, dashboards used by 40 analysts")
-    ]) == []
+    assert (
+        names(
+            [
+                job(
+                    "Junior",
+                    "Built REST endpoints in Python and wrote unit tests, "
+                    "mentored 2 interns, dashboards used by 40 analysts",
+                )
+            ]
+        )
+        == []
+    )
 
 
 # ── check 2: budget ownership at an E1/E2 level ───────────────────────────
 def test_a_junior_owning_a_large_budget_is_flagged():
-    finding, = find_responsibility_mismatches(
+    (finding,) = find_responsibility_mismatches(
         [job("Graduate", "Owned a budget of 4.2 million for vendor selection")]
     )
     assert finding["name"] == "budget_ownership_at_junior_level"
@@ -180,10 +193,17 @@ def test_a_budget_below_the_floor_is_not_flagged():
 
 
 def test_both_junior_checks_can_fire_on_one_role():
-    assert sorted(names([
-        job("Graduate", "Directed a team of 25 engineers and managed "
-                        "an $8.7 million research budget")
-    ])) == [
+    assert sorted(
+        names(
+            [
+                job(
+                    "Graduate",
+                    "Directed a team of 25 engineers and managed "
+                    "an $8.7 million research budget",
+                )
+            ]
+        )
+    ) == [
         "budget_ownership_at_junior_level",
         "team_ownership_at_junior_level",
     ]
@@ -191,7 +211,7 @@ def test_both_junior_checks_can_fire_on_one_role():
 
 # ── check 3: a team far above the stated level ────────────────────────────
 def test_a_senior_claiming_a_very_large_team_is_flagged():
-    finding, = find_responsibility_mismatches(
+    (finding,) = find_responsibility_mismatches(
         [job("Senior", "Led 150 engineers across the platform organisation")]
     )
     assert finding["name"] == "team_far_above_level"
@@ -285,10 +305,12 @@ class FakeWarehouse:
 
 
 def test_run_writes_every_candidate_and_reports_a_summary():
-    warehouse = FakeWarehouse([
-        job("Junior", "Directed a team of 22 engineers", "cv_1_job1", "cv_1"),
-        job("Senior", "Built a payments service", "cv_2_job1", "cv_2"),
-    ])
+    warehouse = FakeWarehouse(
+        [
+            job("Junior", "Directed a team of 22 engineers", "cv_1_job1", "cv_1"),
+            job("Senior", "Built a payments service", "cv_2_job1", "cv_2"),
+        ]
+    )
     messages = []
 
     result = run_signal_responsibility_mismatch(
@@ -308,3 +330,8 @@ def test_the_budget_floor_is_the_documented_value():
     """Pinned so a change to the threshold has to be deliberate."""
     assert BUDGET_MILLIONS_FLAG == 1.0
     assert TEAM_FAR_ABOVE_LEVEL == 30
+
+
+def test_a_malformed_budget_figure_is_ignored_rather_than_raising():
+    """A version string such as "4.2.1" reaches float() and must not crash."""
+    assert budget_millions("managed a budget of $4.2.1M") == 0.0

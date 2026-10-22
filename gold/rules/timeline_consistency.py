@@ -81,13 +81,13 @@ MIN_EXPERIENCE_MONTHS = ladder.MIN_EXPERIENCE_MONTHS
 SENIORITY_SHORTFALL_FLAG_MONTHS = 72
 
 # How strong a single finding is as evidence against the timeline.
-PROVEN = "proven"          # a legitimate CV should never show this
+PROVEN = "proven"  # a legitimate CV should never show this
 SUGGESTIVE = "suggestive"  # a legitimate CV can show it too
 DATA_ISSUE = "data_issue"  # our extraction failed, not the candidate's claim
 
 # Our confidence in the candidate's timeline, derived from the evidence found.
-CONFIRMED = "confirmed"          # nothing found against it
-POSSIBLE = "possible"            # suggestive evidence only, worth a look
+CONFIRMED = "confirmed"  # nothing found against it
+POSSIBLE = "possible"  # suggestive evidence only, worth a look
 NOT_CONFIRMED = "not_confirmed"  # proven evidence of an impossible timeline
 NOT_EVALUATED = "not_evaluated"  # no role could be placed on a timeline
 
@@ -101,9 +101,10 @@ EVIDENCE = {
     # a legitimate Principal can trip this when earlier career is not listed
     # - see SENIORITY_SHORTFALL_FLAG_MONTHS
     "seniority_implausible": SUGGESTIVE,
-    "multiple_current_roles": PROVEN,        # logically impossible
+    "multiple_current_roles": PROVEN,  # logically impossible
     "unevaluable_dates": DATA_ISSUE,
 }
+
 
 # ── Pure core ─────────────────────────────────────────────────────────────
 def months_between(start: date, end: date) -> int:
@@ -165,7 +166,7 @@ def max_overlap_months(spans) -> int:
     """Worst overlap in months between any two roles; 0 if within tolerance."""
     worst = 0
     for index, (start_a, end_a, _) in enumerate(spans):
-        for start_b, end_b, _ in spans[index + 1:]:
+        for start_b, end_b, _ in spans[index + 1 :]:
             overlap = months_between(max(start_a, start_b), min(end_a, end_b))
             if overlap > OVERLAP_TOLERANCE_MONTHS:
                 worst = max(worst, overlap)
@@ -294,12 +295,15 @@ def build_signal_rows(
     signal_rows = []
     for submission_id, jobs in sorted(by_candidate.items()):
         findings = find_timeline_issues(jobs, as_of)
-        signal_rows.append({
-            "submission_id": submission_id,
-            "confidence": timeline_confidence(findings, len(_role_spans(jobs, as_of))),
-            "findings": findings,
-            "as_of_date": as_of.isoformat(),
-            "evaluated_at": timestamp,
-        })
+        signal_rows.append(
+            {
+                "submission_id": submission_id,
+                "confidence": timeline_confidence(
+                    findings, len(_role_spans(jobs, as_of))
+                ),
+                "findings": findings,
+                "as_of_date": as_of.isoformat(),
+                "evaluated_at": timestamp,
+            }
+        )
     return signal_rows
-

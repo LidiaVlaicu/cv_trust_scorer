@@ -11,17 +11,17 @@ from reference import seniority_ladder as ladder
 def test_the_minimums_are_the_published_lower_bounds():
     """The lower bound of each E-band, in months, exactly as the guide states."""
     assert ladder.MIN_EXPERIENCE_MONTHS == {
-        "Intern": 0,        # E1, 0-1 yrs
-        "Apprentice": 0,    # E1
-        "Graduate": 0,      # E1
-        "Junior": 12,       # E2, 1-2 yrs
-        "Mid": 24,          # E3 Engineer III, 2-4 yrs
-        "Senior": 48,       # E4, 4-7 yrs
-        "Lead": 84,         # E5, 7-11 yrs
-        "Staff": 84,        # E5
-        "Principal": 132,   # E6, 11-15 yrs
-        "Manager": 84,      # mapped to E5 by scope, not stated in the source
-        "Director": 132,    # mapped to E6 by scope, not stated in the source
+        "Intern": 0,  # E1, 0-1 yrs
+        "Apprentice": 0,  # E1
+        "Graduate": 0,  # E1
+        "Junior": 12,  # E2, 1-2 yrs
+        "Mid": 24,  # E3 Engineer III, 2-4 yrs
+        "Senior": 48,  # E4, 4-7 yrs
+        "Lead": 84,  # E5, 7-11 yrs
+        "Staff": 84,  # E5
+        "Principal": 132,  # E6, 11-15 yrs
+        "Manager": 84,  # mapped to E5 by scope, not stated in the source
+        "Director": 132,  # mapped to E6 by scope, not stated in the source
     }
 
 
@@ -56,7 +56,7 @@ def test_junior_levels_are_exactly_the_e1_and_e2_bands():
         {"Intern", "Apprentice", "Graduate", "Junior"}
     )
     assert ladder.is_junior_level("Junior") is True
-    assert ladder.is_junior_level("Mid") is False      # E3 ships alone
+    assert ladder.is_junior_level("Mid") is False  # E3 ships alone
     assert ladder.is_junior_level("Senior") is False
     assert ladder.is_junior_level(None) is False
 
@@ -72,11 +72,7 @@ def test_the_inferred_mappings_are_marked_as_inferred():
     Manager and Director are our scope-match, not the guide's words. The flag
     keeps that visible so the thesis can cite the ladder without overclaiming.
     """
-    from_source = {
-        level for level, (_, _, stated) in ladder.LADDER.items() if stated
-    }
-    inferred = {
-        level for level, (_, _, stated) in ladder.LADDER.items() if not stated
-    }
+    from_source = {level for level, (_, _, stated) in ladder.LADDER.items() if stated}
+    inferred = {level for level, (_, _, stated) in ladder.LADDER.items() if not stated}
     assert inferred == {"Manager", "Director"}
     assert "Senior" in from_source and "Principal" in from_source

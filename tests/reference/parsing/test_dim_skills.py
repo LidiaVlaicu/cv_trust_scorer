@@ -7,8 +7,6 @@ if someone later edits the CSV and accidentally collapses Looker into Looker
 Studio, these fail.
 """
 
-from pathlib import Path
-
 import pytest
 
 from reference import SKILLS_TAXONOMY_CSV as TAXONOMY_CSV
@@ -115,6 +113,19 @@ def test_real_csv_parses_and_builds_a_conflict_free_taxonomy():
 )
 def test_real_csv_golden_examples(raw_skill, expected):
     taxonomy = build_skills_taxonomy(
-        to_bigquery_rows(parse_skills_taxonomy(TAXONOMY_CSV.read_text(encoding="utf-8")))
+        to_bigquery_rows(
+            parse_skills_taxonomy(TAXONOMY_CSV.read_text(encoding="utf-8"))
+        )
     )
     assert normalize_skill(raw_skill, taxonomy) == expected
+
+
+def test_an_empty_csv_is_rejected():
+    """No header at all, so there is nothing to check columns against."""
+    with pytest.raises(TaxonomyError, match="empty"):
+        parse_skills_taxonomy("")
+
+
+def test_a_csv_with_a_header_but_no_aliases_is_rejected():
+    with pytest.raises(TaxonomyError, match="no aliases"):
+        parse_skills_taxonomy("canonical_skill,aliases\n")

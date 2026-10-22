@@ -14,13 +14,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from shared import bigquery_client, dataset_name, replace_table, table_id
-
 from reference import LOCATION_ALIASES_CSV
 from reference.parsing.dim_location_aliases import (
     parse_location_aliases,
     to_bigquery_rows,
 )
+from shared import bigquery_client, dataset_name, replace_table, table_id
 
 load_dotenv()
 
@@ -41,7 +40,9 @@ def load_dim_location_aliases(csv_path: Path = LOCATION_ALIASES_CSV) -> int:
     replace_table(client, table, rows, DIM_LOCATION_ALIASES_SCHEMA)
 
     countries = len({row["country"] for row in rows})
-    print(f"Loaded {len(rows)} location aliases covering {countries} countries into {table}")
+    print(
+        f"Loaded {len(rows)} location aliases covering {countries} countries into {table}"
+    )
     return len(rows)
 
 

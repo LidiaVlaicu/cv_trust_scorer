@@ -11,28 +11,33 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [ { name = "Lidia Danilov" } ]
 
+# Pinned to the versions the test suite passes against. Unpinned, an install
+# takes whatever was released that day, so a breaking version turns CI red for
+# reasons that have nothing to do with this code.
 dependencies = [
-  "pymupdf",
-  "spacy",
-  "transformers",
-  "torch",
-  "fastapi",
-  "uvicorn",
-  "streamlit",
-  "dagster",
-  "dagster-webserver",
-  "dbt-bigquery",
-  "requests",
-  "python-magic",
-  "pydantic-ai",
-  "google-cloud-storage",
-  "google-cloud-bigquery",
-  "reportlab",      # dataset_generation/text_to_pdf.py renders the synthetic CVs
-  "phonenumbers",   # silver/logic phone normalization to E.164
+  "pymupdf==1.28.2",                # bronze reads the CV PDFs through fitz
+  "dagster==1.13.21",
+  "dagster-webserver==1.13.21",     # the Dagster UI; a tool, not an import
+  "requests==2.34.2",
+  "pydantic==2.13.5",
+  "python-dotenv==1.2.3",
+  "anthropic==1.4.0",               # bronze extraction and the dataset generator
+  "google-cloud-storage==3.1.1",
+  "google-cloud-bigquery==3.45.0",
+  "reportlab==5.0.1",               # text_to_pdf.py renders the synthetic CVs
+  "phonenumbers==9.0.40",           # silver phone normalization to E.164
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "black", "ruff", "isort", "pre-commit"]
+dev = [
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "pandas==3.0.5",
+  "black==26.5.1",
+  "ruff==0.16.6",
+  "isort==9.0.1",
+  "pre-commit==4.6.2",
+]
 
 [tool.black]
 line-length = 88
@@ -44,6 +49,11 @@ line-length = 88
 [tool.ruff.lint]
 select = ["E", "W", "F", "I"]
 
+# Black already holds every line of code to 88 characters. What still runs
+# over is prose inside comments and docstrings, which black leaves alone and
+# which reads worse when broken to fit.
+ignore = ["E501"]
+
 [tool.isort]
 profile = "black"
 
@@ -51,6 +61,36 @@ profile = "black"
 minversion = "7.0"
 addopts = "-q"
 testpaths = ["tests"]
+
+# Measures the pipeline packages, not the tests themselves - counting the
+# test files would inflate the number with code that is all assertion.
+# tools/ is left out: those are manual scripts, run by hand and never
+# imported by the pipeline.
+[tool.coverage.run]
+source = [
+  "bronze",
+  "silver",
+  "gold",
+  "reference",
+  "shared",
+  "external",
+  "dataset_generation",
+  "pipeline",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+precision = 1
+
+# The script guard only runs when a module is invoked directly, which no test
+# does; counting it as a miss would report every script as incomplete.
+exclude_also = ['if __name__ == "__main__":']
+
+# CI fails below this. Set under the current figure so an ordinary change
+# does not trip it, but close enough that an untested module of any size
+# fails the build rather than quietly lowering the number.
+fail_under = 95
 
 [tool.setuptools.packages.find]
 include = ["bronze*", "silver*", "gold*", "reference*", "shared*", "external*", "dataset_generation*", "pipeline*", "tools*", "app*"]

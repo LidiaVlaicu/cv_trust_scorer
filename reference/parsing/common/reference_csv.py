@@ -55,7 +55,9 @@ def read_csv_rows(
                 f"(already on line {first_seen_at[key]})"
             )
         first_seen_at[key] = line_number
-        rows.append({column: (raw_row.get(column) or "").strip() for column in required_columns})
+        rows.append(
+            {column: (raw_row.get(column) or "").strip() for column in required_columns}
+        )
 
     if not rows:
         raise ReferenceDataError("Reference CSV contains no rows")

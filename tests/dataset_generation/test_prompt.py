@@ -47,7 +47,8 @@ def test_the_prompt_states_the_role_seniority_years_and_place():
 
 def test_github_is_asked_for_or_refused():
     assert "GitHub URL with 3-4 relevant public repositories" in build_cv_prompt(
-        spec(github=True))
+        spec(github=True)
+    )
     assert "No GitHub URL" in build_cv_prompt(spec(github=False))
 
 
@@ -75,8 +76,8 @@ def test_the_ai_text_inconsistency_suppresses_the_human_voice_instruction():
     one prompt. Asking for both means it may not be planted at all.
     """
     prompt = build_cv_prompt(inconsistent_spec("ai_text"))
-    assert "AI-generated language" in prompt       # the inconsistency is asked for
-    assert HUMAN_SUMMARY not in prompt             # and not contradicted
+    assert "AI-generated language" in prompt  # the inconsistency is asked for
+    assert HUMAN_SUMMARY not in prompt  # and not contradicted
     assert "natural human voice" not in prompt
 
 

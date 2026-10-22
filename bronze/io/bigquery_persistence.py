@@ -13,12 +13,26 @@ from dotenv import load_dotenv
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
+from shared import ensure_table as shared_ensure_table
+
 load_dotenv()
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 BRONZE_DATASET = os.environ["BQ_DATASET_BRONZE"]
 
+
 # ── BigQuery helpers ──────────────────────────────────────────────────────
+def ensure_table(table_id: str, schema: list[bigquery.SchemaField]) -> None:
+    """
+    Creates `table_id` if it does not exist yet, so the pipeline can run
+    against a fresh project.
+
+    The bronze tables are appended to rather than replaced, so unlike silver
+    and gold they are not created by the write itself.
+    """
+    shared_ensure_table(bigquery.Client(project=PROJECT_ID), table_id, schema)
+
+
 def insert_rows_to_bigquery(table_id, rows):
     """Inserts a list of rows into a BigQuery table."""
     client = bigquery.Client(project=PROJECT_ID)
@@ -46,6 +60,7 @@ def delete_cv_data(submission_id: str):
             ]
         )
         client.query(query, job_config=job_config).result()
+
 
 def get_processed_versions(table, id_col="submission_id", hash_col="content_hash"):
     """
@@ -106,4 +121,3 @@ def get_processed_submission_ids(table, id_col="submission_id"):
         return {row[id_col] for row in rows}
     except NotFound:
         return set()
-
