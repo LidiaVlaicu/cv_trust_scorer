@@ -40,4 +40,4 @@ jobs:
       # No credentials are set, so anything reaching GCS, BigQuery or an API
       # would fail here rather than pass quietly against a real project.
       - name: Tests
-        run: pytest
+        run: pytest --cov

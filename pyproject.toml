@@ -31,6 +31,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "pandas==3.0.5",
   "black==26.5.1",
   "ruff==0.16.6",
   "isort==9.0.1",
@@ -59,6 +61,36 @@ profile = "black"
 minversion = "7.0"
 addopts = "-q"
 testpaths = ["tests"]
+
+# Measures the pipeline packages, not the tests themselves - counting the
+# test files would inflate the number with code that is all assertion.
+# tools/ is left out: those are manual scripts, run by hand and never
+# imported by the pipeline.
+[tool.coverage.run]
+source = [
+  "bronze",
+  "silver",
+  "gold",
+  "reference",
+  "shared",
+  "external",
+  "dataset_generation",
+  "pipeline",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+precision = 1
+
+# The script guard only runs when a module is invoked directly, which no test
+# does; counting it as a miss would report every script as incomplete.
+exclude_also = ['if __name__ == "__main__":']
+
+# CI fails below this. Set under the current figure so an ordinary change
+# does not trip it, but close enough that an untested module of any size
+# fails the build rather than quietly lowering the number.
+fail_under = 95
 
 [tool.setuptools.packages.find]
 include = ["bronze*", "silver*", "gold*", "reference*", "shared*", "external*", "dataset_generation*", "pipeline*", "tools*", "app*"]

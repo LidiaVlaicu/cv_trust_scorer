@@ -9,4 +9,6 @@ google-cloud-storage==3.1.1
 google-cloud-bigquery==3.45.0
 phonenumbers==9.0.40
 pytest==9.1.1
+pytest-cov==7.1.0
+pandas==3.0.5
 reportlab==5.0.1
