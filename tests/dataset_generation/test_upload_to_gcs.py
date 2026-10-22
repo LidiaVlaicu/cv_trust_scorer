@@ -45,12 +45,16 @@ class FakeBucket:
 def upload(monkeypatch, tmp_path):
     """Runs the upload against a temporary data/ folder and a fake bucket."""
 
-    def go(files: dict[str, list[str]], already_there=()):
+    def go(files: dict[str, list[str]], already_there=(), ground_truth=None):
         for folder, names in files.items():
             directory = tmp_path / "data" / folder
             directory.mkdir(parents=True)
             for name in names:
                 (directory / name).write_bytes(b"%PDF-1.7")
+
+        if ground_truth is not None:
+            (tmp_path / "data").mkdir(exist_ok=True)
+            (tmp_path / "data" / "ground_truth.csv").write_text(ground_truth)
 
         bucket = FakeBucket(already_there)
         monkeypatch.setattr(
@@ -109,3 +113,36 @@ def test_an_empty_dataset_uploads_nothing(upload):
     bucket = upload({"legitimate": [], "inconsistent": []})
 
     assert bucket.uploaded == []
+
+
+# ── the ground truth file ─────────────────────────────────────────────────
+def test_the_ground_truth_goes_up_beside_the_cvs(upload, tmp_path):
+    bucket = upload({"legitimate": ["cv_001.pdf"]}, ground_truth="id,folder\n001,x\n")
+
+    assert "cvs/raw/ground_truth.csv" in bucket.uploaded
+
+
+def test_it_sits_above_the_folders_so_the_pdf_listing_ignores_it(upload):
+    bucket = upload({"legitimate": []}, ground_truth="id\n001\n")
+
+    (name,) = bucket.uploaded
+    assert name == "cvs/raw/ground_truth.csv"
+    assert "/legitimate/" not in name and "/inconsistent/" not in name
+
+
+def test_a_missing_ground_truth_is_a_warning_not_a_failure(upload, capsys):
+    bucket = upload({"legitimate": ["cv_001.pdf"]})
+
+    assert "cvs/raw/ground_truth.csv" not in bucket.uploaded
+    assert "[WARN]" in capsys.readouterr().out
+
+
+def test_an_existing_ground_truth_in_the_bucket_is_overwritten(upload):
+    """A stale copy would describe CVs that are no longer there."""
+    bucket = upload(
+        {"legitimate": []},
+        ground_truth="id\n001\n",
+        already_there=["cvs/raw/ground_truth.csv"],
+    )
+
+    assert "cvs/raw/ground_truth.csv" in bucket.uploaded
