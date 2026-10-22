@@ -259,3 +259,36 @@ def test_date_problems_flags_unparsed_and_future_and_implausible():
 def test_date_problems_accepts_a_current_role_without_end_date():
     row = {"start_date": "2021-03-01", "end_date": None, "is_current": True}
     assert work_experience_date_problems(row) == []
+
+
+def test_reference_building_skips_rows_with_a_blank_job_title():
+    """A blank key would otherwise swallow every lookup that misses."""
+    reference = build_work_experience_reference(
+        [
+            {"job_title": "   ", "seniority_level": "Senior"},
+            {"job_title": "Staff Engineer", "seniority_level": "Staff"},
+        ],
+        [],
+    )
+
+    assert reference.seniority_for("") is None
+    assert reference.seniority_for("Staff Engineer") == "Staff"
+
+
+def test_reference_building_skips_rows_with_a_blank_location_token():
+    reference = build_work_experience_reference(
+        [],
+        [
+            {"location_token": "  ", "country": "Ireland"},
+            {"location_token": "Dublin", "country": "Ireland"},
+        ],
+    )
+
+    assert reference.country_for("") is None
+    assert reference.country_for("Dublin") == "Ireland"
+
+
+def test_a_location_that_is_only_remote_has_no_city_or_country():
+    reference = build_work_experience_reference([], [])
+
+    assert split_location("Remote", reference) == (None, None, True)

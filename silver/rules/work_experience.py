@@ -183,7 +183,11 @@ def split_location(
         return None, None, is_remote
 
     parts = [part.strip() for part in text.split(",") if part.strip()]
-    if not parts:
+    # Unreachable, and kept as a statement of the invariant: the strip above
+    # removed every leading and trailing space and comma, and the check after
+    # it returned when that left nothing. So `text` still holds a character
+    # that is neither, which survives the split and gives at least one part.
+    if not parts:  # pragma: no cover
         return None, None, is_remote
 
     country_token = parts[-1]

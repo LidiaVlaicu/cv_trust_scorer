@@ -330,3 +330,8 @@ def test_the_budget_floor_is_the_documented_value():
     """Pinned so a change to the threshold has to be deliberate."""
     assert BUDGET_MILLIONS_FLAG == 1.0
     assert TEAM_FAR_ABOVE_LEVEL == 30
+
+
+def test_a_malformed_budget_figure_is_ignored_rather_than_raising():
+    """A version string such as "4.2.1" reaches float() and must not crash."""
+    assert budget_millions("managed a budget of $4.2.1M") == 0.0

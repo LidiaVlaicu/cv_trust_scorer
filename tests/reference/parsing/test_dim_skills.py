@@ -118,3 +118,14 @@ def test_real_csv_golden_examples(raw_skill, expected):
         )
     )
     assert normalize_skill(raw_skill, taxonomy) == expected
+
+
+def test_an_empty_csv_is_rejected():
+    """No header at all, so there is nothing to check columns against."""
+    with pytest.raises(TaxonomyError, match="empty"):
+        parse_skills_taxonomy("")
+
+
+def test_a_csv_with_a_header_but_no_aliases_is_rejected():
+    with pytest.raises(TaxonomyError, match="no aliases"):
+        parse_skills_taxonomy("canonical_skill,aliases\n")

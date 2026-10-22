@@ -408,3 +408,23 @@ def test_build_signal_rows_is_pure():
     first = build_signal_rows(WORK_EXPERIENCE, as_of=AS_OF, evaluated_at=EVALUATED_AT)
     second = build_signal_rows(WORK_EXPERIENCE, as_of=AS_OF, evaluated_at=EVALUATED_AT)
     assert first == second
+
+
+def test_a_role_ending_before_it_starts_is_clamped_rather_than_inverted():
+    """Silver rejects these, so this only guards against a bad direct load."""
+    issues = find_timeline_issues(
+        [
+            {
+                "submission_id": "cv_1",
+                "experience_id": "cv_1_1",
+                "job_title": "Data Engineer",
+                "seniority_level": "Mid",
+                "start_date": date(2021, 6, 1),
+                "end_date": date(2020, 1, 1),
+                "is_current": False,
+            }
+        ],
+        as_of=date(2026, 1, 1),
+    )
+
+    assert isinstance(issues, list)

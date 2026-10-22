@@ -49,3 +49,9 @@ def test_parse_rejects_a_file_with_no_rows():
             required_columns=COLUMNS,
             key_column="job_title",
         )
+
+
+def test_parse_rejects_a_completely_empty_file():
+    """No header at all, so there are no columns to check against."""
+    with pytest.raises(ReferenceDataError, match="empty"):
+        read_csv_rows("", required_columns=COLUMNS, key_column="job_title")

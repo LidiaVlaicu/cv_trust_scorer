@@ -112,3 +112,16 @@ def test_transform_skill_row_flags_unmatched_without_dropping_it():
 
     assert result["raw_skill"] == "PowerBII"
     assert result["normalized_skill"] is None
+
+
+def test_an_alias_that_normalizes_to_nothing_is_skipped():
+    """A punctuation-only alias would otherwise key the whole lookup."""
+    taxonomy = build_skills_taxonomy(
+        [
+            {"alias": "  ", "canonical_skill": "Python"},
+            {"alias": "py", "canonical_skill": "Python"},
+        ]
+    )
+
+    assert normalize_skill("py", taxonomy) == "Python"
+    assert normalize_skill("", taxonomy) is None
