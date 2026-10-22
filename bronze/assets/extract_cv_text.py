@@ -33,6 +33,7 @@ from bronze.io.gcs_storage import (
     BUCKET_NAME,
     download_pdf_from_gcs,
     list_pdfs_in_gcs,
+    save_json_to_gcs,
 )
 from bronze.rules.cv_analysis import classify_profile, compute_file_hash
 from shared.timing import timed
@@ -115,6 +116,9 @@ class CvTextStore(Protocol):
     def insert_cv_texts(self, rows: list[dict]) -> None:
         """Appends rows to raw_cv_texts."""
 
+    def archive_raw_text(self, submission_id: str, payload: dict) -> None:
+        """Keeps the extracted text as JSON, beside the entity archive."""
+
 
 class GcsBigQueryCvTextStore:
     """CvTextStore backed by GCS and BigQuery."""
@@ -142,6 +146,9 @@ class GcsBigQueryCvTextStore:
         table = f"{PROJECT_ID}.{BRONZE_DATASET}.{CV_TEXTS_TABLE}"
         ensure_table(table, CV_TEXTS_SCHEMA)
         insert_rows_to_bigquery(table, rows)
+
+    def archive_raw_text(self, submission_id: str, payload: dict) -> None:
+        save_json_to_gcs(payload, f"cvs/extracted/raw_text/{submission_id}.json")
 
 
 def read_pdf_text(pdf_bytes: bytes) -> str:
@@ -195,6 +202,7 @@ def run_extract_raw_text(
                     report(f"[SKIP empty text] {filename}")
                     continue
 
+                store.archive_raw_text(submission_id, {"raw_text": raw_text})
                 rows.append(
                     build_cv_text_row(
                         submission_id,

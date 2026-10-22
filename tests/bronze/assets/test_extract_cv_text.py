@@ -37,6 +37,7 @@ class FakeCvTextStore:
         self.write_count = 0
         self.deleted: list[str] = []
         self.downloaded: list[str] = []
+        self.archived: list[tuple[str, dict]] = []
 
     def list_pdf_names(self, folder: str) -> list[str]:
         return [name for name in self._pdfs if f"/{folder}/" in name]
@@ -54,6 +55,9 @@ class FakeCvTextStore:
     def insert_cv_texts(self, rows: list[dict]) -> None:
         self.written.extend(rows)
         self.write_count += 1
+
+    def archive_raw_text(self, submission_id: str, payload: dict) -> None:
+        self.archived.append((submission_id, payload))
 
 
 PDFS = {
@@ -209,3 +213,31 @@ def test_the_schema_covers_every_column_written():
     schema_fields = {field.name for field in CV_TEXTS_SCHEMA}
     for row in rows:
         assert set(row) == schema_fields
+
+
+def test_the_text_of_every_cv_is_archived():
+    """A copy outside the warehouse, beside the entity archive."""
+    store = FakeCvTextStore(PDFS)
+
+    run_extract_raw_text(store, extract_text=lambda b: "CV TEXT")
+
+    assert [sid for sid, _ in store.archived] == [
+        row["submission_id"] for row in store.written
+    ]
+
+
+def test_the_archive_holds_the_extracted_text():
+    store = FakeCvTextStore(PDFS)
+
+    run_extract_raw_text(store, extract_text=lambda b: "CV TEXT")
+
+    _, payload = store.archived[0]
+    assert payload == {"raw_text": "CV TEXT"}
+
+
+def test_a_cv_with_no_readable_text_is_not_archived():
+    store = FakeCvTextStore(PDFS)
+
+    run_extract_raw_text(store, extract_text=lambda b: "   ")
+
+    assert store.archived == []

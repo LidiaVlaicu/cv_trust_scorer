@@ -208,3 +208,18 @@ def test_the_text_of_a_pdf_is_read_back():
 def test_bytes_that_are_not_a_pdf_are_rejected():
     with pytest.raises(Exception):
         extract_cv_text.read_pdf_text(b"not a pdf")
+
+
+def test_the_raw_text_store_archives_beside_the_entity_archive(cv_store, monkeypatch):
+    store, recorder = cv_store
+    monkeypatch.setattr(
+        extract_cv_text,
+        "save_json_to_gcs",
+        lambda payload, path: recorder.archived.append((payload, path)),
+    )
+
+    store.archive_raw_text("cv_1", {"raw_text": "CV TEXT"})
+
+    assert recorder.archived == [
+        ({"raw_text": "CV TEXT"}, "cvs/extracted/raw_text/cv_1.json")
+    ]
