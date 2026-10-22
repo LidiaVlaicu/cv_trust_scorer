@@ -66,11 +66,18 @@ CV TEXT:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    response_text = message.content[0].text.strip()
+    return parse_extraction_response(message.content[0].text)
 
-    # remove markdown code blocks if Claude added them
-    if response_text.startswith("```"):
-        response_text = re.sub(r"```json\n?|```\n?", "", response_text).strip()
 
-    cv_data = ExtractedCV.model_validate_json(response_text)
-    return cv_data
+def parse_extraction_response(response_text: str) -> ExtractedCV:
+    """
+    Validate Claude's reply against ExtractedCV.
+
+    Claude wraps the JSON in a markdown code block often enough that the
+    fences are stripped before validation. Kept apart from the network call
+    so the part that can go wrong on a well-formed response is testable.
+    """
+    text = response_text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"```json\n?|```\n?", "", text).strip()
+    return ExtractedCV.model_validate_json(text)
