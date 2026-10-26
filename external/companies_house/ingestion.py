@@ -19,6 +19,7 @@ def fetch_company(
 
     return response.items
 
+
 class CompanyHouseIngestion:
 
     def __init__(self):

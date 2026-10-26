@@ -1,5 +1,5 @@
 """
-bronze.raw_work_experience -> gold.signal_company_verification
+silver.silver_work_experience -> gold.signal_company_verification
 
 Structure: a thin I/O shell around the pure matching rules.
 
@@ -9,7 +9,8 @@ Structure: a thin I/O shell around the pure matching rules.
 
 The store, the Companies House search and the sleep are injected, so the
 run function works against an in-memory fake with no BigQuery and no API
-calls. Every matching rule lives in external/companies_house/matching.py.
+calls. Every rule - how names compare and what the comparison means -
+lives in gold/rules/company_verification.py.
 """
 
 import time
@@ -18,20 +19,32 @@ from typing import Callable, Protocol
 
 import requests
 from dagster import asset, get_dagster_logger
+from google.cloud import bigquery
 
 from external.companies_house.ingestion import fetch_company
-from external.companies_house.matching import (
-    classify_status,
-    find_best_match,
-    normalize_company_name,
-)
 from external.companies_house.models import (
     CompanySearchResult,
     CompanyVerificationResult,
 )
+from external.companies_house.name_normalization import normalize_company_name
 from external.companies_house.storage import CompanyHouseStorage
+from gold.rules.company_verification import classify_status, find_match
+from shared.timing import timed
 
 LIVE_API_SLEEP_SECONDS = 0.5
+
+SIGNAL_TABLE = "signal_company_verification"
+# One row per role, appended rather than replaced, so the table has to exist
+# before the first insert. Matches the live table.
+SIGNAL_SCHEMA = [
+    bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("experience_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("company_name_cv", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("matched_company_number", "STRING"),
+    bigquery.SchemaField("matched_company_name", "STRING"),
+    bigquery.SchemaField("status", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("verified_at", "TIMESTAMP", mode="REQUIRED"),
+]
 
 
 # ── I/O boundary ──────────────────────────────────────────────────────────
@@ -39,7 +52,7 @@ class CompanyVerificationStore(Protocol):
     """Everything the company signal needs from the warehouse."""
 
     def read_work_experience_companies(self) -> list[dict]:
-        """`raw_work_experience` rows: {experience_id, submission_id,
+        """`silver_work_experience` rows: {experience_id, submission_id,
         company_name}."""
 
     def get_verified_experience_ids(self) -> set[str]:
@@ -104,8 +117,8 @@ def run_verify_companies(
         else:
             candidates = cached
 
-        best_match, score = find_best_match(company_name, candidates)
-        status = classify_status(best_match is not None, score)
+        best_match, match = find_match(company_name, candidates)
+        status = classify_status(match)
 
         results.append(
             CompanyVerificationResult(
@@ -116,13 +129,12 @@ def run_verify_companies(
                     best_match.company_number if best_match else None
                 ),
                 matched_company_name=best_match.title if best_match else None,
-                match_score=score,
                 status=status,
                 verified_at=now(),
             )
         )
 
-        report(f"[{status.upper()}] {company_name} (score={score:.0f})")
+        report(f"[{status.upper()}] {company_name}")
 
     if results:
         store.insert_verification_results(results)
@@ -132,7 +144,7 @@ def run_verify_companies(
 
 
 # ── ASSET: verify_companies ───────────────────────────────────────────────
-@asset(deps=["extract_entities"])
+@asset(deps=["silver_work_experience"])
 def verify_companies():
     """
     Signal: company verification.
@@ -142,7 +154,11 @@ def verify_companies():
     Search results are cached by normalized company name so CVs that repeat
     the same employer don't re-hit the API.
     """
-    return run_verify_companies(
-        CompanyHouseStorage(),
-        report=get_dagster_logger().info,
+    report = get_dagster_logger().info
+    return timed(
+        "verify_companies",
+        report,
+        lambda: run_verify_companies(
+            CompanyHouseStorage(verification_schema=SIGNAL_SCHEMA), report=report
+        ),
     )

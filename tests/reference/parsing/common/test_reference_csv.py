@@ -13,9 +13,9 @@ COLUMNS = ["job_title", "seniority_level"]
 def test_parse_returns_stripped_rows_limited_to_required_columns():
     text = "job_title,seniority_level,notes\n  Staff Engineer , Staff ,whatever\n"
 
-    assert read_csv_rows(
-        text, required_columns=COLUMNS, key_column="job_title"
-    ) == [{"job_title": "Staff Engineer", "seniority_level": "Staff"}]
+    assert read_csv_rows(text, required_columns=COLUMNS, key_column="job_title") == [
+        {"job_title": "Staff Engineer", "seniority_level": "Staff"}
+    ]
 
 
 def test_parse_rejects_missing_column():
@@ -49,3 +49,9 @@ def test_parse_rejects_a_file_with_no_rows():
             required_columns=COLUMNS,
             key_column="job_title",
         )
+
+
+def test_parse_rejects_a_completely_empty_file():
+    """No header at all, so there are no columns to check against."""
+    with pytest.raises(ReferenceDataError, match="empty"):
+        read_csv_rows("", required_columns=COLUMNS, key_column="job_title")

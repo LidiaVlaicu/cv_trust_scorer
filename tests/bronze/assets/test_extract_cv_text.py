@@ -37,6 +37,7 @@ class FakeCvTextStore:
         self.write_count = 0
         self.deleted: list[str] = []
         self.downloaded: list[str] = []
+        self.archived: list[tuple[str, dict]] = []
 
     def list_pdf_names(self, folder: str) -> list[str]:
         return [name for name in self._pdfs if f"/{folder}/" in name]
@@ -55,6 +56,9 @@ class FakeCvTextStore:
         self.written.extend(rows)
         self.write_count += 1
 
+    def archive_raw_text(self, submission_id: str, payload: dict) -> None:
+        self.archived.append((submission_id, payload))
+
 
 PDFS = {
     "cvs/raw/inconsistent/cv_1.pdf": b"%PDF cv one",
@@ -66,13 +70,15 @@ def _text_for(pdf_bytes: bytes) -> str:
     return f"{TECHNICAL_TEXT} {pdf_bytes.decode()}"
 
 
-def _run(store: FakeCvTextStore, **kwargs):
-    return run_extract_raw_text(
+def _run(store: FakeCvTextStore, **kwargs) -> list[dict]:
+    """Runs the pipeline and returns the rows the store recorded."""
+    run_extract_raw_text(
         store,
         extract_text=kwargs.pop("extract_text", _text_for),
         now=lambda: FIXED_TIME,
         **kwargs,
     )
+    return store.written
 
 
 # ── the decision, on its own ───────────────────────────────────────────────
@@ -197,3 +203,43 @@ def test_build_cv_text_row_is_pure():
     args = ("cv_1", TECHNICAL_TEXT, "hash", "cvs/raw/x/cv_1.pdf", "x", FIXED_TIME, "b")
 
     assert build_cv_text_row(*args) == build_cv_text_row(*args)
+
+
+def test_the_schema_covers_every_column_written():
+    """Guards against a column being added to the row but not the table."""
+    from bronze.assets.extract_cv_text import CV_TEXTS_SCHEMA
+
+    store = FakeCvTextStore(PDFS)
+    rows = _run(store)
+
+    schema_fields = {field.name for field in CV_TEXTS_SCHEMA}
+    for row in rows:
+        assert set(row) == schema_fields
+
+
+def test_the_text_of_every_cv_is_archived():
+    """A copy outside the warehouse, beside the entity archive."""
+    store = FakeCvTextStore(PDFS)
+
+    run_extract_raw_text(store, extract_text=lambda b: "CV TEXT")
+
+    assert [sid for sid, _ in store.archived] == [
+        row["submission_id"] for row in store.written
+    ]
+
+
+def test_the_archive_holds_the_extracted_text():
+    store = FakeCvTextStore(PDFS)
+
+    run_extract_raw_text(store, extract_text=lambda b: "CV TEXT")
+
+    _, payload = store.archived[0]
+    assert payload == {"raw_text": "CV TEXT"}
+
+
+def test_a_cv_with_no_readable_text_is_not_archived():
+    store = FakeCvTextStore(PDFS)
+
+    run_extract_raw_text(store, extract_text=lambda b: "   ")
+
+    assert store.archived == []

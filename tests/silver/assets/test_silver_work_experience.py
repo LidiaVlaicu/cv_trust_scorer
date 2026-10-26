@@ -92,7 +92,9 @@ class FakeWorkExperienceWarehouse:
 
 
 def _run():
-    warehouse = FakeWorkExperienceWarehouse(JOB_TITLE_ROWS, LOCATION_ALIAS_ROWS, RAW_ROWS)
+    warehouse = FakeWorkExperienceWarehouse(
+        JOB_TITLE_ROWS, LOCATION_ALIAS_ROWS, RAW_ROWS
+    )
     result = run_silver_work_experience(warehouse, now=lambda: FIXED_TIME)
     return warehouse, result
 

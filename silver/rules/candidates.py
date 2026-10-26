@@ -49,9 +49,7 @@ def standardize_phone(phone: str) -> str | None:
     if not phonenumbers.is_valid_number(parsed):
         return None
 
-    return phonenumbers.format_number(
-        parsed, phonenumbers.PhoneNumberFormat.E164
-    )
+    return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
 
 def is_valid_email(email: str) -> bool:
@@ -88,5 +86,3 @@ def transform_candidate_row(row: dict) -> dict:
         "linkedin": (row.get("linkedin") or "").strip(),
         "github": (row.get("github") or "").strip(),
     }
-
-

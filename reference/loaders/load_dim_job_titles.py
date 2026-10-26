@@ -12,10 +12,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from shared import bigquery_client, dataset_name, replace_table, table_id
-
 from reference import JOB_TITLES_CSV
 from reference.parsing.dim_job_titles import parse_job_titles, to_bigquery_rows
+from shared import bigquery_client, dataset_name, replace_table, table_id
 
 load_dotenv()
 

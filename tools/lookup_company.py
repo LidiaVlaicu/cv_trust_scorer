@@ -8,18 +8,15 @@ under what spelling. Reads only; writes nothing.
     python tools/lookup_company.py "TechVault Solutions Ltd"
 """
 
-from pprint import pprint
 import argparse
+from pprint import pprint
 
 from external.companies_house.ingestion import fetch_company
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "company_name",
-        help="Company name to search"
-    )
+    parser.add_argument("company_name", help="Company name to search")
     args = parser.parse_args()
 
     results = fetch_company(args.company_name)

@@ -42,20 +42,29 @@ class CompanyHouseClient:
 
         response.raise_for_status()
 
-        payload = response.json()
+        return parse_search_payload(response.json())
 
-        companies = [
-            CompanySearchResult(
-                company_number=item["company_number"],
-                title=item["title"],
-                company_status=item.get("company_status"),
-                company_type=item.get("company_type"),
-                address_snippet=item.get("address_snippet"),
-            )
-            for item in payload.get("items", [])
-        ]
 
-        return CompanySearchResponse(
-            items=companies,
-            total_results=payload.get("total_results", 0),
+def parse_search_payload(payload: dict) -> CompanySearchResponse:
+    """
+    The search response as our own models.
+
+    Only company_number and title are required; the rest of the fields are
+    absent often enough in real results that they default to None. Kept apart
+    from the request so the mapping can be checked without a network call.
+    """
+    companies = [
+        CompanySearchResult(
+            company_number=item["company_number"],
+            title=item["title"],
+            company_status=item.get("company_status"),
+            company_type=item.get("company_type"),
+            address_snippet=item.get("address_snippet"),
         )
+        for item in payload.get("items", [])
+    ]
+
+    return CompanySearchResponse(
+        items=companies,
+        total_results=payload.get("total_results", 0),
+    )
