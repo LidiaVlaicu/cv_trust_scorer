@@ -10,12 +10,9 @@ the model is asked to plant the inconsistency and may not comply. So a CV in
 data/inconsistent/ was *asked* to contain these, which is not the same as
 containing them.
 
-Known problem with `tech_anachronism`: the release years quoted below are
-wrong. Verified first-public-availability dates are dbt 2016 (not 2019),
-LangChain October 2022 (not 2023), GitHub Actions 2019, HuggingFace
-Transformers 2018. A CV claiming dbt in a 2017 role is therefore not an
-anachronism at all, which is why most CVs carrying this label contain no
-detectable one. Fix the years here before regenerating.
+The release years quoted in `tech_anachronism` are first-release dates. A
+candidate with one or two years of experience has no role old enough to carry
+this one.
 """
 
 INCONSISTENCY_TYPES: dict[str, str] = {
@@ -52,11 +49,13 @@ INCONSISTENCY_TYPES: dict[str, str] = {
     "appear anywhere in their work experience bullet points. For example: claims expert "
     "knowledge of Kubernetes, Terraform and ArgoCD in the skills section but none of "
     "these technologies are mentioned in any job description. The gap must be obvious.",
-    "tech_anachronism": "The candidate claims to have used modern technologies during a job that ended "
-    "before those technologies were widely available. Examples: "
-    "used dbt in a role from 2014-2016 (dbt not widely available until 2019), "
-    "used LangChain in a role from 2019-2021 (LangChain released in 2023), "
-    "used GitHub Actions in a role from 2015-2018 (released in 2019), "
-    "or used HuggingFace Transformers in a role from 2015-2017 (released in 2018). "
+    "tech_anachronism": "One job must claim a technology that did not exist while that job ran. "
+    "Keep the job dates consistent with the stated years of experience, and end the job at "
+    "least two years before the technology was first released, so the gap is unambiguous. "
+    "Choose a pair that fits the candidate's career from: dbt (first released 2016), "
+    "HuggingFace Transformers (2018), GitHub Actions (November 2019), "
+    "LangChain (October 2022), the GPT-4 API (March 2023), uv (February 2024). "
+    "For example a role from 2013 to 2016 claiming GitHub Actions, or a role from "
+    "2019 to 2021 claiming the GPT-4 API. "
     "Make the anachronism clear by using specific years in the job dates.",
 }

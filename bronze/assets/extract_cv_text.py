@@ -168,11 +168,12 @@ def run_extract_raw_text(
     folders: tuple[str, ...] = FOLDERS,
     now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     report: Callable[[str], None] = lambda message: None,
-) -> list[dict]:
+) -> dict:
     """
-    Reads every PDF, skips the unchanged ones, and writes the rest to
-    raw_cv_texts. The store, the PDF reader and the clock are injected so
-    this runs with no GCS, no BigQuery and no Dagster.
+    Reads every PDF, skips the unchanged ones, writes the rest to
+    raw_cv_texts, and returns how many rows it wrote. The store, the PDF
+    reader and the clock are injected so this runs with no GCS, no BigQuery
+    and no Dagster.
     """
     existing = store.read_processed_versions()
     report(f"Already processed: {len(existing)} CVs")
@@ -223,7 +224,7 @@ def run_extract_raw_text(
         store.insert_cv_texts(rows)
         report(f"Inserted {len(rows)} rows")
 
-    return rows
+    return {"cv_texts_count": len(rows)}
 
 
 # ── ASSET: extract_raw_text ───────────────────────────────────────────────

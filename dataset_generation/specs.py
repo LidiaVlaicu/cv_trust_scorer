@@ -40,8 +40,9 @@ SENIORITY_CONFIG = {
     "Staff": {"years": ["10", "12", "14"], "github_prob": 0.1},
 }
 
-# Half UK, half elsewhere in Europe. The phone prefix belongs to the city, so
-# a mismatch between them is something an inconsistency must introduce.
+# UK only, so Companies House can verify the employers a CV names. The phone
+# prefix belongs to the city, so a mismatch between them is something an
+# inconsistency must introduce.
 LOCATIONS = [
     {"city": "London", "country": "United Kingdom", "phone": "+44"},
     {"city": "Manchester", "country": "United Kingdom", "phone": "+44"},
@@ -53,16 +54,6 @@ LOCATIONS = [
     {"city": "Cambridge", "country": "United Kingdom", "phone": "+44"},
     {"city": "Oxford", "country": "United Kingdom", "phone": "+44"},
     {"city": "Liverpool", "country": "United Kingdom", "phone": "+44"},
-    {"city": "Berlin", "country": "Germany", "phone": "+49"},
-    {"city": "Amsterdam", "country": "Netherlands", "phone": "+31"},
-    {"city": "Paris", "country": "France", "phone": "+33"},
-    {"city": "Barcelona", "country": "Spain", "phone": "+34"},
-    {"city": "Madrid", "country": "Spain", "phone": "+34"},
-    {"city": "Lisbon", "country": "Portugal", "phone": "+351"},
-    {"city": "Dublin", "country": "Ireland", "phone": "+353"},
-    {"city": "Stockholm", "country": "Sweden", "phone": "+46"},
-    {"city": "Copenhagen", "country": "Denmark", "phone": "+45"},
-    {"city": "Zurich", "country": "Switzerland", "phone": "+41"},
 ]
 
 # Fixed so the dataset is reproducible: the same seed yields the same plan, and

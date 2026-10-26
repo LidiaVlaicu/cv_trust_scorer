@@ -70,13 +70,15 @@ def _text_for(pdf_bytes: bytes) -> str:
     return f"{TECHNICAL_TEXT} {pdf_bytes.decode()}"
 
 
-def _run(store: FakeCvTextStore, **kwargs):
-    return run_extract_raw_text(
+def _run(store: FakeCvTextStore, **kwargs) -> list[dict]:
+    """Runs the pipeline and returns the rows the store recorded."""
+    run_extract_raw_text(
         store,
         extract_text=kwargs.pop("extract_text", _text_for),
         now=lambda: FIXED_TIME,
         **kwargs,
     )
+    return store.written
 
 
 # ── the decision, on its own ───────────────────────────────────────────────
