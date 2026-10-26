@@ -83,6 +83,8 @@ test that enforces the pure/I-O split rather than leaving it to convention.
 - [SETUP.md](docs/SETUP.md): step-by-step setup instructions.
 - [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md): rationale for significant choices.
 - [BUSINESS_RULES.md](docs/BUSINESS_RULES.md): every rule the pipeline applies, and which layer owns it.
+- [SIGNALS.md](docs/SIGNALS.md): how to read what the gold signals produce.
+- [LIMITATIONS.md](docs/LIMITATIONS.md): what the project does not do — functional, scale, testing, operational.
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): solutions to known issues.
 - [tools/README.md](tools/README.md): the by-hand utilities, and why they are not tests.
 
