@@ -29,10 +29,14 @@ the rule for combining them across signals does not exist.
 
 ### F2. Company verification covers UK employers only
 
-Companies House registers UK companies. Of 895 work-experience rows, **427 are
-UK and 468 are in nine other countries** (Spain, Netherlands, France, Portugal,
-Sweden, Germany, Denmark, Ireland, Switzerland). For those, `unconfirmed` means
-"this register cannot confirm it", not "the company is invented" — and the
+Companies House registers UK companies. Since 2026-10-24 every generated
+candidate is UK based, which removes most of this exposure — the earlier
+dataset placed 159 of 300 candidates abroad, and roughly half its employer rows
+were outside the register's reach.
+
+What remains: nothing constrains the *employers* a CV names, so the model can
+still place a UK candidate at a foreign company. For those rows `unconfirmed`
+means "this register cannot confirm it", not "the company is invented", and the
 status vocabulary does not distinguish the two.
 
 ### F3. A typo inside a word makes an employer unconfirmed
@@ -132,7 +136,7 @@ return [dict(row) for row in self._client.query(query).result()]
 ```
 
 `get_all_cv_texts()` is the worst case — it selects `raw_text` for every CV and
-materializes the lot. At 314 CVs that is a few megabytes. At 100,000 CVs, with
+materializes the lot. At 300 CVs that is a few megabytes. At 100,000 CVs, with
 ~5 KB of text each, it is about **500 MB in a single Python list** before any
 work begins, and silver's full-refresh transforms build a second list beside it.
 
@@ -150,12 +154,13 @@ failed rows are reported per row.
 One Claude call per CV, one Companies House call per uncached employer, with a
 0.5 second pause between them. Nothing runs concurrently.
 
-Extrapolating from the current design, not from a measurement:
+The left column is measured (see S5); the right is that rate extrapolated, not
+an observation:
 
-| | 314 CVs (today) | 100,000 CVs |
+| | 300 CVs (measured) | 100,000 CVs |
 |---|---|---|
-| Claude extraction, serial at ~3 s/CV | ~16 min | **~83 hours** |
-| Company lookups, 0.5 s each, uncached | ~7 min | ~14 hours |
+| Claude extraction, ~7.8 s/CV | 39 min | **~217 hours** |
+| Company lookups, ~900 roles | 14 min | **~78 hours** |
 | Cost of one extraction pass | ~$1.70 | **~$570** |
 
 The pipeline is usable at thesis scale and would need redesign — batching,
@@ -163,16 +168,33 @@ concurrency, chunked reads — to go beyond roughly a few thousand CVs.
 
 ### S4. Full refresh re-does all work every run
 
-Silver and gold truncate and reload. That is correct and cheap at 314 rows; at
+Silver and gold truncate and reload. That is correct and cheap at 300 rows; at
 scale it means recomputing every candidate to add one.
 
 Bronze is the exception — content hashes skip unchanged CVs, which is the only
 incremental path in the project.
 
-### S5. No measured performance anywhere
+### S5. Timings are recorded, nothing else is
 
-No benchmark for a full pipeline run, no per-asset timing recorded, no profiling.
-Every figure above is arithmetic from the code, not an observation.
+Every asset returns `duration_seconds`, visible in its Dagster materialization
+metadata. A full run of 300 CVs on 2026-10-25:
+
+| Asset | Duration |
+|---|---|
+| `extract_raw_text` | 5 min 50 s |
+| `extract_entities` | 38 min 54 s |
+| the three silver assets | 8 s |
+| the two date and responsibility signals | 6 s |
+| `verify_companies` | 14 min 10 s |
+| **total** | **~59 min** |
+
+What is still missing: no profiling, no memory measurement, no benchmark at any
+other volume, so the 100,000-CV column above remains arithmetic rather than an
+observation.
+
+One timing is worth reading twice: a re-run where every CV hashes unchanged
+still takes 51 seconds, because the hash is computed on bytes that must be
+downloaded first. Skipping avoids reprocessing, not transfer.
 
 ### S6. Runtime is not bounded
 
@@ -184,7 +206,7 @@ and no asset has a timeout.
 
 ## Testing
 
-### T1. 317 tests, and all of them are in-process
+### T1. 626 tests, and all of them are in-process
 
 Two kinds only: unit tests over pure functions, and whole-asset tests driven
 against in-memory fakes. Both are fast and free, and both stop at the process
@@ -228,29 +250,38 @@ The error paths inside the BigQuery adapters are untested.
 
 ### T8. No coverage measurement, no load tests, no property-based tests
 
-Coverage has never been measured, so "317 tests" says nothing about what
+Coverage has never been measured, so "626 tests" says nothing about what
 fraction of branches run. There are no performance tests, no load tests, no
 fuzzing of the CV text, and no mutation testing to check the tests would notice
 a broken rule.
 
-### T9. No CI
+### T9. CI runs the suite, and nothing more
 
-No `.github/workflows`. Nothing proves the project installs and passes its tests
-on a machine other than the one it was written on — see O1 for why that matters
-right now.
+`.github/workflows/ci.yml` installs the project on a clean Ubuntu runner and
+runs ruff, black, isort and pytest on every pull request. It completes in about
+a minute, rising to roughly four and a half when the dependency cache is
+rebuilt; the tests themselves are 5 seconds of that.
+
+No credentials are configured there, deliberately, so anything reaching GCS,
+BigQuery or an API fails rather than passing quietly against the real project.
+The consequence is that CI inherits T2 exactly: it proves the project installs
+and that the in-process tests pass, and nothing about the adapters.
 
 ---
 
 ## Operations
 
-### O1. A clean install fails
+### O1. The install is declared twice
 
-`anthropic` and `python-dotenv` are imported across the project and **absent
-from `requirements.txt`**. They work locally only because they are already
-installed. Ten listed packages are imported nowhere, including `torch`,
-`transformers` and `spacy`.
+`anthropic` and `python-dotenv` were missing from `requirements.txt`, and ten
+packages were listed that nothing imports, including `torch`, `transformers`
+and `spacy`. Both are fixed, and CI installs the project on a clean runner on
+every pull request, so a broken dependency list now fails there rather than
+silently.
 
-This is the most immediate barrier to anyone else running the project.
+What remains is duplication: dependencies are declared in both `pyproject.toml`
+and `requirements.txt`, CI installs from the first and the README tells a reader
+to use the second. Nothing keeps the two in step.
 
 ### O2. Only bronze is checked
 
@@ -354,7 +385,7 @@ Limits set by other systems, not choices in this codebase.
 | BigQuery | 10 MB per streaming insert request | S2 — a large insert fails rather than slowing |
 | BigQuery | streaming inserts are not immediately consistent for some operations | not currently handled or tested |
 | PyMuPDF | can only recover text a PDF actually contains | a scanned or image-only CV yields nothing, and T6 means this is untested |
-| GitHub Actions | 2,000 free minutes/month on private repos | not yet a constraint — no CI exists |
+| GitHub Actions | 2,000 free minutes/month on private repos | not a constraint — a run takes about a minute |
 
 ---
 
@@ -365,7 +396,7 @@ write-up.
 
 ### E1. The CVs are synthetic
 
-314 CVs from one model and one prompt template. Real CVs vary more in layout,
+300 CVs from one model and one prompt template. Real CVs vary more in layout,
 length and language, and real fabrication is unlikely to resemble fabrication a
 model was asked to produce.
 
@@ -375,10 +406,16 @@ A CV in `data/inconsistent/` was *asked* to contain a flaw. Nothing checks that
 the model complied — the generation code says so explicitly. Every figure
 measured against those folders inherits that uncertainty.
 
-### E3. One flaw type is known to be defective
+### E3. One flaw type cannot apply to every CV that carries its label
 
-`tech_anachronism` quotes release years that are wrong, so CVs generated with it
-may contain no anachronism, or an accidental one.
+`tech_anachronism` quoted wrong release years until 2026-10-24: dbt was given as
+2019 against its real 2016 release, so a CV claiming dbt in a 2017 role carried
+no anachronism at all. The years are now the real ones.
+
+What the fix cannot repair: the flaw needs a role that ended at least two years
+before the technology existed, and **5 of the 29 CVs carrying this label declare
+one or two years of experience**, so no role of theirs is old enough. Report
+this type against 24 achievable cases, not 29.
 
 ### E4. Thresholds were tuned and scored on the same data
 
@@ -394,10 +431,12 @@ from figures no code in the repo regenerates.
 chosen *by* that measurement, so it is the least defensible from the repository
 alone.
 
-### E6. The corpus is English and Europe-centred
+### E6. The dataset is English and UK-based
 
-One language; employers concentrated in the UK and nine other European
-countries. Nothing establishes behaviour outside that.
+One language, and since 2026-10-24 every candidate is based in one of ten UK
+cities — chosen so Companies House can verify the employers (F2). Nothing
+establishes behaviour outside that, and the earlier European spread is no
+longer represented.
 
 ### E7. No baseline and no comparison
 
@@ -415,14 +454,13 @@ evidence that the layered pipeline outperforms a simpler method.
 | F5 seniority never inferred | F2 single register, no "not checkable" status |
 | F6 six-year margin, E5+ only | F4 `partial_match` consumed by nothing |
 | F8 permissive technical pre-filter | F10 reference staleness invisible |
-| F9 bronze records, silver supersedes | O1 broken dependency list |
-| O3 per-row failure, the run continues | T9 no CI |
+| F9 bronze records, silver supersedes | O1 two declarations of the install |
+| O3 per-row failure, the run continues | T3 no contract tests for the fakes |
 | S4 full refresh at this scale | T2 no integration tests |
-| D3 synthetic data, so no PII exposure | T3 no contract tests for the fakes |
-| E1 synthetic data for labelled evaluation | T6 PDF round trip untested |
-| | E5 accuracy not reproducible |
-| | S1–S3 no path beyond a few thousand CVs |
+| D3 synthetic data, so no PII exposure | T6 PDF round trip untested |
+| E1 synthetic data for labelled evaluation | E5 accuracy not reproducible |
+| T9 CI proves the install and the suite | S1–S3 no path beyond a few thousand CVs |
 
 The left column is the architecture working as intended. The right column is
-the backlog — and O1, T9 and E5 are the three that most affect whether someone
-else can trust the result.
+the backlog — and E5 is the one that most affects whether someone else can
+trust the result.
